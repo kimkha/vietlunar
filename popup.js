@@ -213,10 +213,12 @@ function showYearSelect() {
 	window.print();
 }
 
+/*
 function infoCellSelect(id) {
 	if (id == 0) {
 	}
 }
+*/
 
 function alertDayInfo(dd, mm, yy, leap, jd, sday, smonth, syear) {
 	var lunar = new LunarDate(dd, mm, yy, leap, jd);

@@ -186,9 +186,9 @@ function findLunarDate(jd, ly) {
 
 function getLunarDate(dd, mm, yyyy) {
 	var ly, jd;
-	if (yyyy < 1800 || 2199 < yyyy) {
+	//if (yyyy < 1800 || 2199 < yyyy) {
 		//return new LunarDate(0, 0, 0, 0, 0);
-	}
+	//}
 	ly = getYearInfo(yyyy);
 	jd = jdn(dd, mm, yyyy);
 	if (jd < ly[0].jd) {

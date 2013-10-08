@@ -25,5 +25,5 @@ java -jar ./compiler.jar --js amlich.js --js_output_file compiled/amlich.js
 cd compiled
 zip -9 -q -r vietlunar.zip *
 cd ..
-#mv compiled/vietlunar.zip .
+mv compiled/vietlunar.zip .
 

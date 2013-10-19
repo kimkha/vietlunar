@@ -5,8 +5,9 @@ function refreshText() {
 	var text = "" + current.day;
 	var title = "";
 	
-	chrome.browserAction.setBadgeBackgroundColor({color:"#008"});
-	chrome.browserAction.setBadgeText({text:text});
+	chrome.browserAction.setIcon({path:"icon/"+current.day+".png"});
+	//chrome.browserAction.setBadgeBackgroundColor({color:"#008"});
+	//chrome.browserAction.setBadgeText({text:text});
 }
 
 refreshText();

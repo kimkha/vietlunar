@@ -8,6 +8,7 @@ rm -rf compiled
 mkdir compiled
 mkdir -p compiled/_locales/en/
 mkdir -p compiled/_locales/vi/
+mkdir -p compiled/icon/
 
 cp manifest.json compiled/
 cp icon16.png compiled/
@@ -17,6 +18,12 @@ cp icon128.png compiled/
 cp popup.html compiled/
 cp _locales/en/messages.json compiled/_locales/en/
 cp _locales/vi/messages.json compiled/_locales/vi/
+
+max=30
+for i in `seq 1 $max`
+do
+    cp icon/$i.png compiled/icon/
+done
 
 java -jar ./compiler.jar --js background.js --js_output_file compiled/background.js
 java -jar ./compiler.jar --js popup.js --js_output_file compiled/popup.js

@@ -1,15 +1,34 @@
+importScripts("amlich.js");
+
+var ALARM_NAME = "refreshLunarIcon";
 
 function refreshText() {
 	refreshTime();
 	var current = getCurrentLunarToday();
-	var text = "" + current.day;
 	var title = getDayName(current);
-	
-	chrome.browserAction.setIcon({path:"icon/"+current.day+".png"});
-	chrome.browserAction.setTitle({title:title});
-	//chrome.browserAction.setBadgeBackgroundColor({color:"#008"});
-	//chrome.browserAction.setBadgeText({text:text});
-	setTimeout(refreshText, 60*60*1000);
+
+	chrome.action.setIcon({path: "icon/" + current.day + ".png"});
+	chrome.action.setTitle({title: title});
 }
 
+function ensureAlarm() {
+	chrome.alarms.create(ALARM_NAME, {periodInMinutes: 60});
+}
+
+chrome.alarms.onAlarm.addListener(function(alarm) {
+	if (alarm.name === ALARM_NAME) {
+		refreshText();
+	}
+});
+
+chrome.runtime.onInstalled.addListener(function() {
+	ensureAlarm();
+	refreshText();
+});
+
+chrome.runtime.onStartup.addListener(function() {
+	refreshText();
+});
+
+ensureAlarm();
 refreshText();

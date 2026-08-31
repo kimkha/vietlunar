@@ -1,22 +1,28 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
 
-  "name" : "__MSG_extName__",
+  "name": "__MSG_extName__",
   "description": "__MSG_extDesc__",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "default_locale": "en",
-  "icons": { "16": "icon16.png",
-             "48": "icon48.png",
-            "128": "icon128.png" },
-
-  "offline_enabled": true,
-
-  "background": {
-    "scripts": ["amlich.js", "background.js"]
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   },
 
-  "browser_action": {
-    "default_icon": "icon19.png",
+  "permissions": ["alarms"],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_icon": {
+      "16": "icon16.png",
+      "19": "icon19.png",
+      "48": "icon48.png"
+    },
     "default_popup": "popup.html"
   }
 }

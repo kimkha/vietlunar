@@ -1,4 +1,4 @@
-(function(window){
+(function(global){
 
 	var today, currentLunarYear, currentLunarDate, currentMonth, currentYear;
 
@@ -243,7 +243,8 @@
 	}
 
 	function getSelectedMonth() {
-		var query = window.location.search;
+		if (typeof location === "undefined") return;
+		var query = location.search;
 		var arr = parseQuery(query);
 		var idx;
 		for (idx = 0; idx < arr.length; idx++) {
@@ -393,16 +394,27 @@
 		currentYear = today.getFullYear();
 	}
 	
-	window.getSelectedMonth = getSelectedMonth;
-	window.getCurrentMonth = getCurrentMonth;
-	window.getCurrentYear = getCurrentYear;
-	window.getMonth = getMonth;
-	window.getYearCanChi = getYearCanChi;
-	window.getToday = getToday;
-	window.getDayName = getDayName;
-	window.getCurrentLunarToday = getCurrentLunarToday;
-	window.refreshTime = init;
-	
-	window.addEventListener("load", init, false);
+	global.getSelectedMonth = getSelectedMonth;
+	global.getCurrentMonth = getCurrentMonth;
+	global.getCurrentYear = getCurrentYear;
+	global.getMonth = getMonth;
+	global.getYearCanChi = getYearCanChi;
+	global.getToday = getToday;
+	global.getDayName = getDayName;
+	global.getCurrentLunarToday = getCurrentLunarToday;
+	global.refreshTime = init;
+	global.LunarDate = LunarDate;
+	global.CHI = CHI;
+	global.TIETKHI = TIETKHI;
+	global.getCanHour0 = getCanHour0;
+	global.getSunLongitude = getSunLongitude;
+	global.getGioHoangDao = getGioHoangDao;
+	global.getDayString = getDayString;
 
-})(window);
+	if (typeof document !== "undefined") {
+		global.addEventListener("load", init, false);
+	} else {
+		init();
+	}
+
+})(typeof globalThis !== "undefined" ? globalThis : window);

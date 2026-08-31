@@ -42,7 +42,7 @@
 		var res = "";
 		res += printStyle();
 		res += '<table align=center>\n';
-		res += ('<tr><td colspan="3" class="tennam" onClick="showYearSelect();">'+yearName+'</td></tr>\n');
+		res += ('<tr><td colspan="3" class="tennam" data-action="show-year-select">'+yearName+'</td></tr>\n');
 		for (var i = 1; i<= 12; i++) {
 			if (i % 3 == 1) res += '<tr>\n';
 			res += '<td>\n';
@@ -144,11 +144,11 @@
 		//res += ('<tr><td colspan="7" class="tenthang" onClick="showMonthSelect();">'+monthName+'</td></tr>\n');
 		res += ('<tr><td colspan="2" class="navi-l">'+getPrevYearLink(mm, yy)+' &nbsp;'+getPrevMonthLink(mm, yy)+'</td>\n');
 		//res += ('<td colspan="1" class="navig"><a href="'+getPrevMonthLink(mm, yy)+'"><img src="left1.gif" alt="Prev"></a></td>\n');
-		res += ('<td colspan="3" class="tenthang" onClick="showMonthSelect();">'+monthName+'</td>\n');
+		res += ('<td colspan="3" class="tenthang" data-action="show-month-select">'+monthName+'</td>\n');
 		//res += ('<td colspan="1" class="navi-r"><a href="'+getNextMonthLink(mm, yy)+'"><img src="right1.gif" alt="Next"></a></td>\n');
 		res += ('<td colspan="2" class="navi-r">'+getNextMonthLink(mm, yy)+' &nbsp;'+getNextYearLink(mm, yy)+'</td></tr>\n');
 		//res += ('<tr><td colspan="7" class="tenthang"><a href="'+getNextMonthLink(mm, yy)+'"><img src="right.gif" alt="Next"></a></td></tr>\n');
-		res += ('<tr onClick="alertAbout();">\n');
+		res += ('<tr data-action="about">\n');
 		for(var i=0;i<=6;i++) {
 			res += ('<td class=ngaytuan>'+DAYNAMES[i]+'</td>\n');
 		}
@@ -189,11 +189,21 @@
 			lunar = lunarDate.day + "/" + lunarDate.month;
 		}
 		var res = "";
-		var args = lunarDate.day + "," + lunarDate.month + "," + lunarDate.year + "," + lunarDate.leap;
-		args += ("," + lunarDate.jd + "," + solarDate + "," + solarMonth + "," + solarYear);
 		res += ('<td class="'+cellClass+'"');
-		if (lunarDate != null) res += (' title="'+getDayName(lunarDate)+'" onClick="alertDayInfo('+args+');"');
-		res += (' <div style=color:'+solarColor+' class="'+solarClass+'">'+solarDate+'</div> <div class="'+lunarClass+'">'+lunar+'</div></td>\n');
+		if (lunarDate != null) {
+			res += ' title="'+getDayName(lunarDate)+'"';
+			res += ' data-action="day-info"';
+			res += ' data-dd="'+lunarDate.day+'"';
+			res += ' data-mm="'+lunarDate.month+'"';
+			res += ' data-yy="'+lunarDate.year+'"';
+			res += ' data-leap="'+lunarDate.leap+'"';
+			res += ' data-jd="'+lunarDate.jd+'"';
+			res += ' data-sday="'+solarDate+'"';
+			res += ' data-smonth="'+solarMonth+'"';
+			res += ' data-syear="'+solarYear+'"';
+		}
+		res += '>';
+		res += (' <div style="color:'+solarColor+'" class="'+solarClass+'">'+solarDate+'</div> <div class="'+lunarClass+'">'+lunar+'</div></td>\n');
 		return res;
 	}
 
@@ -242,10 +252,43 @@
 		window.setTimeout("showVietCal()",5000);
 	}
 
+	function handleCalendarClick(event) {
+		var target = event.target;
+		while (target && target !== event.currentTarget) {
+			var action = target.getAttribute("data-action");
+			if (action === "day-info") {
+				alertDayInfo(
+					parseInt(target.getAttribute("data-dd"), 10),
+					parseInt(target.getAttribute("data-mm"), 10),
+					parseInt(target.getAttribute("data-yy"), 10),
+					parseInt(target.getAttribute("data-leap"), 10),
+					parseInt(target.getAttribute("data-jd"), 10),
+					parseInt(target.getAttribute("data-sday"), 10),
+					parseInt(target.getAttribute("data-smonth"), 10),
+					parseInt(target.getAttribute("data-syear"), 10)
+				);
+				return;
+			}
+			if (action === "show-month-select") {
+				showMonthSelect();
+				return;
+			}
+			if (action === "show-year-select") {
+				showYearSelect();
+				return;
+			}
+			if (action === "about") {
+				alertAbout();
+				return;
+			}
+			target = target.parentNode;
+		}
+	}
+
 	window.onload = function(){
-		//showVietCal();
-		//setOutputSize("small");
-		document.getElementById("content").innerHTML = printSelectedMonth();
+		var content = document.getElementById("content");
+		content.addEventListener("click", handleCalendarClick);
+		content.innerHTML = printSelectedMonth();
 	}
 
 })(window);

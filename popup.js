@@ -2,27 +2,6 @@
 
 	var ABOUT = "\u00C2m l\u1ECBch Vi\u1EC7t Nam - Version 0.8"+"\n\u00A9 2004 H\u1ED3 Ng\u1ECDc \u0110\u1EE9c [http://come.to/duc]";
 	var DAYNAMES = new Array("CN", "T2", "T3", "T4", "T5", "T6", "T7");
-	var PRINT_OPTS = new OutputOptions();
-	var FONT_SIZES = new Array("9pt", "13pt", "17pt");
-	var TAB_WIDTHS = new Array("180px", "420px", "600px");
-
-	function OutputOptions() {
-		this.fontSize = "13pt";
-		this.tableWidth = "420px";
-	}
-
-	function setOutputSize(size) {
-		var idx = 1;
-		if (size == "small") {
-			idx = 0;
-		} else if (size == "big") {
-			idx = 2;
-		} else {
-			idx = 1;
-		}
-		PRINT_OPTS.fontSize = FONT_SIZES[idx];
-		PRINT_OPTS.tableWidth = TAB_WIDTHS[idx];
-	}
 
 	function printSelectedMonth() {
 		getSelectedMonth();
@@ -30,18 +9,13 @@
 	}
 
 	function printMonth(mm, yy) {
-		var res = "";
-		res += printStyle();
-		res += printTable(mm, yy);
-		//res += printFoot();
-		return res;
+		return printTable(mm, yy);
 	}
 
 	function printYear(yy) {
 		var yearName = "N&#x103;m " + getYearCanChi(yy) + " " + yy;
 		var res = "";
-		res += printStyle();
-		res += '<table align=center>\n';
+		res += '<table class="nam">\n';
 		res += ('<tr><td colspan="3" class="tennam" data-action="show-year-select">'+yearName+'</td></tr>\n');
 		for (var i = 1; i<= 12; i++) {
 			if (i % 3 == 1) res += '<tr>\n';
@@ -50,39 +24,13 @@
 			res += '</td>\n';
 			if (i % 3 == 0) res += '</tr>\n';
 		}
-		res += '<table>\n';
-		//res += printFoot();
+		res += '</table>\n';
 		return res;
 	}
 
 	function printSelectedYear() {
 		getSelectedMonth();
 		return printYear(getCurrentYear());
-	}
-
-	function printStyle() {
-		var fontSize = PRINT_OPTS.fontSize;
-		var res = "";
-		res += '<style type="text/css">\n';
-		res += '<!--\n';
-		//res += '  body {margin:0}\n';
-		res += '  .tennam {text-align:center; font-size:150%; line-height:120%; font-weight:bold; color:#000000; background-color: #CCCCCC}\n';
-		res += '  .thang {font-size: '+fontSize+'; padding:1; line-height:100%; font-family:Tahoma,Verdana,Arial; table-layout:fixed}\n';
-		res += '  .tenthang {text-align:center; font-size:125%; line-height:100%; font-weight:bold; color:#330033; background-color: #CCFFCC}\n';
-		res += '  .navi-l {text-align:center; font-size:75%; line-height:100%; font-family:Verdana,Times New Roman,Arial; font-weight:bold; color:red; background-color: #CCFFCC}\n';
-		res += '  .navi-r {text-align:center; font-size:75%; line-height:100%; font-family:Verdana,Arial,Times New Roman; font-weight:bold; color:#330033; background-color: #CCFFCC}\n';
-		res += '  .ngaytuan {width:14%; text-align:center; font-size:125%; line-height:100%; color:#330033; background-color: #FFFFCC}\n';
-		res += '  .ngaythang {background-color:#FDFDF0}\n';
-		res += '  .homnay {background-color:#FFF000}\n';
-		res += '  .tet {background-color:#FFCC99}\n';
-		res += '  .am {text-align:right;font-size:75%;line-height:100%;color:blue}\n';
-		res += '  .am2 {text-align:right;font-size:75%;line-height:100%;color:#004080}\n';
-		res += '  .t2t6 {text-align:left;font-size:125%;color:black}\n';
-		res += '  .t7 {text-align:left;font-size:125%;line-height:100%;color:green}\n';
-		res += '  .cn {text-align:left;font-size:125%;line-height:100%;color:red}\n';
-		res += '-->\n';
-		res += '</style>\n';
-		return res;
 	}
 
 	function printTable(mm, yy) {
@@ -94,9 +42,10 @@
 		var MonthHead = mm + "/" + yy;
 		var LunarHead = getYearCanChi(ld1.year);
 		var res = "";
-		res += ('<table class="thang" border="2" cellpadding="1" cellspacing="1" width="'+PRINT_OPTS.tableWidth+'">\n');
+		res += ('<table class="thang">\n');
 		res += printHead(mm, yy);
 		for (i = 0; i < 6; i++) {
+			if (7 * i >= emptyCells + currentMonth.length) break;
 			res += ("<tr>\n");
 			for (j = 0; j < 7; j++) {
 				k = 7 * i + j;
@@ -150,29 +99,26 @@
 		//res += ('<tr><td colspan="7" class="tenthang"><a href="'+getNextMonthLink(mm, yy)+'"><img src="right.gif" alt="Next"></a></td></tr>\n');
 		res += ('<tr data-action="about">\n');
 		for(var i=0;i<=6;i++) {
-			res += ('<td class=ngaytuan>'+DAYNAMES[i]+'</td>\n');
+			res += ('<td class="ngaytuan">'+DAYNAMES[i]+'</td>\n');
 		}
 		res += ('<\/tr>\n');
 		return res;
 	}
 
 	function printEmptyCell() {
-			return '<td class=ngaythang><div class=cn>&nbsp;</div> <div class=am>&nbsp;</div></td>\n';
+			return '<td class="ngaythang"><div class="cn">&nbsp;</div> <div class="am">&nbsp;</div></td>\n';
 	}
 
 	function printCell(lunarDate, solarDate, solarMonth, solarYear) {
-		var cellClass, solarClass, lunarClass, solarColor;
+		var cellClass, solarClass, lunarClass;
 		cellClass = "ngaythang";
 		solarClass = "t2t6";
 		lunarClass = "am";
-		solarColor = "black";
 		var dow = (lunarDate.jd + 1) % 7;
 		if (dow == 0) {
 			solarClass = "cn";
-			solarColor = "red";
 		} else if (dow == 6) {
 			solarClass = "t7";
-			solarColor = "green";
 		}
 		var today = getToday();
 		if (solarDate == today.getDate() && solarMonth == today.getMonth()+1 && solarYear == today.getFullYear()) {
@@ -203,7 +149,7 @@
 			res += ' data-syear="'+solarYear+'"';
 		}
 		res += '>';
-		res += (' <div style="color:'+solarColor+'" class="'+solarClass+'">'+solarDate+'</div> <div class="'+lunarClass+'">'+lunar+'</div></td>\n');
+		res += (' <div class="'+solarClass+'">'+solarDate+'</div> <div class="'+lunarClass+'">'+lunar+'</div></td>\n');
 		return res;
 	}
 

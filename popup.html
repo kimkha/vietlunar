@@ -3,10 +3,233 @@
   <head>
     <title>Extension Popup</title>
     <style>
+      :root {
+        /* Bảng màu gốc, giữ nguyên tông */
+        --plum: #330033;
+        --mint: #ccffcc;
+        --butter: #ffffcc;
+        --cream: #fdfdf0;
+        --today: #fff000;
+        --tet: #ffcc99;
+        --grey: #cccccc;
+        --lunar: #0000ff;
+        --lunar-leap: #004080;
+        --sat: #008000;
+        --sun: #ff0000;
+
+        --mint-deep: #a8e6a8;
+        --butter-deep: #f0e9b0;
+        --hairline: rgba(51, 0, 51, 0.12);
+        --ink-soft: rgba(51, 0, 51, 0.55);
+      }
+
       body {
         min-width: 420px;
         overflow-x: hidden;
-        margin:0;padding:0;
+        margin: 0;
+        padding: 10px;
+        box-sizing: border-box;
+        background: #f4f4ee;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Tahoma, Verdana, Arial, sans-serif;
+        font-size: 14px;
+        color: var(--plum);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Bảng tháng */
+      .thang {
+        width: 100%;
+        table-layout: fixed;
+        border-spacing: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--cream);
+        box-shadow: 0 1px 2px rgba(51, 0, 51, 0.08),
+          0 6px 18px rgba(51, 0, 51, 0.1);
+      }
+
+      .thang td {
+        border: 0;
+        border-bottom: 1px solid var(--hairline);
+        border-right: 1px solid var(--hairline);
+      }
+
+      .thang tr td:last-child {
+        border-right: 0;
+      }
+
+      .thang tr:last-child td {
+        border-bottom: 0;
+      }
+
+      /* Hàng điều hướng + tên tháng */
+      .thang .tenthang,
+      .thang .navi-l,
+      .thang .navi-r {
+        height: 44px;
+        vertical-align: middle;
+        background: linear-gradient(180deg, var(--mint) 0%, var(--mint-deep) 100%);
+        border-bottom-color: rgba(51, 0, 51, 0.18);
+      }
+
+      .tenthang {
+        text-align: center;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        color: var(--plum);
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+      }
+
+      .tenthang:hover {
+        background: var(--mint-deep);
+      }
+
+      .navi-l,
+      .navi-r {
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .navi-l a,
+      .navi-r a {
+        display: inline-block;
+        min-width: 22px;
+        margin: 0 1px;
+        padding: 3px 2px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.4;
+        text-decoration: none;
+        transition: background-color 0.15s ease;
+      }
+
+      .navi-l a {
+        color: var(--sun);
+      }
+
+      .navi-r a {
+        color: var(--plum);
+      }
+
+      .navi-l a:hover,
+      .navi-r a:hover {
+        background: rgba(255, 255, 255, 0.6);
+      }
+
+      /* Hàng thứ trong tuần */
+      .thang .ngaytuan {
+        width: 14.285%;
+        padding: 7px 0;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        background: linear-gradient(180deg, var(--butter) 0%, var(--butter-deep) 100%);
+        border-bottom-color: rgba(51, 0, 51, 0.18);
+      }
+
+      /* Ô ngày */
+      .ngaythang,
+      .homnay,
+      .tet {
+        height: 44px;
+        padding: 5px 7px 4px;
+        vertical-align: top;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+      }
+
+      .ngaythang {
+        background: var(--cream);
+      }
+
+      .ngaythang:hover,
+      .tet:hover {
+        background: #f2f7ee;
+      }
+
+      .homnay {
+        background: var(--today);
+        box-shadow: inset 0 0 0 2px rgba(51, 0, 51, 0.35);
+      }
+
+      .tet {
+        background: var(--tet);
+      }
+
+      /* Ô đệm đầu/cuối tháng: không phải ngày thật */
+      .ngaythang:not([data-action]) {
+        background: rgba(51, 0, 51, 0.03);
+        cursor: default;
+      }
+
+      /* Ngày dương */
+      .t2t6,
+      .t7,
+      .cn {
+        font-size: 19px;
+        font-weight: 600;
+        line-height: 1.1;
+        text-align: left;
+      }
+
+      .t2t6 {
+        color: #1a1a1a;
+      }
+
+      .t7 {
+        color: var(--sat);
+      }
+
+      .cn {
+        color: var(--sun);
+      }
+
+      /* Ngày âm */
+      .am,
+      .am2 {
+        margin-top: 1px;
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.1;
+        text-align: right;
+      }
+
+      .am {
+        color: var(--lunar);
+      }
+
+      .am2 {
+        color: var(--lunar-leap);
+        font-style: italic;
+      }
+
+      /* Chế độ xem cả năm */
+      .nam {
+        margin: 0 auto;
+        border-spacing: 8px;
+      }
+
+      .nam > tbody > tr > td {
+        vertical-align: top;
+      }
+
+      .tennam {
+        padding: 10px 0;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        color: #000;
+        background: linear-gradient(180deg, #e0e0e0 0%, var(--grey) 100%);
+        border-radius: 10px;
+        cursor: pointer;
       }
     </style>
     <script src="amlich.js"></script>

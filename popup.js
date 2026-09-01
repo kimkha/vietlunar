@@ -1,13 +1,15 @@
 (function(window) {
 
-	var ABOUT = "Âm lịch Việt Nam - Version 0.8\n© 2004 Hồ Ngọc Đức [http://come.to/duc]";
-	var DAYNAMES = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-	var DAYNAMES_FULL = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
-	var MIN_YEAR = 1800;
-	var MAX_YEAR = 2199;
-	var UPCOMING_MONTHS = 12;
+	const ABOUT = "Âm lịch Việt Nam - Version 0.8\n© 2004 Hồ Ngọc Đức [http://come.to/duc]";
+	const DAYNAMES = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+	const DAYNAMES_FULL = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
+	const MIN_YEAR = 1800;
+	const MAX_YEAR = 2199;
+	const UPCOMING_MONTHS = 12;
+	const WEEKS_PER_MONTH = 5;
+	const SLOTS_PER_MONTH = 7 * WEEKS_PER_MONTH;
 
-	var LUNAR_HOLIDAYS = {
+	const LUNAR_HOLIDAYS = {
 		"1/1": "Tết Nguyên Đán",
 		"2/1": "Tết Nguyên Đán (mùng 2)",
 		"3/1": "Tết Nguyên Đán (mùng 3)",
@@ -21,7 +23,7 @@
 		"23/12": "Ông Táo về trời"
 	};
 
-	var SOLAR_HOLIDAYS = {
+	const SOLAR_HOLIDAYS = {
 		"1/1": "Tết Dương lịch",
 		"14/2": "Lễ Tình nhân",
 		"8/3": "Quốc tế Phụ nữ",
@@ -36,11 +38,11 @@
 	};
 
 	// Mùng 2 và 3 gộp vào dòng Tết Nguyên Đán của mùng 1 trong box "sắp tới"
-	var TET_CONTINUATION = { "2/1": true, "3/1": true };
+	const TET_CONTINUATION = { "2/1": true, "3/1": true };
 
 	// Chốt danh sách cho box "sắp tới": thêm khoá vào LUNAR_HOLIDAYS không tự vào box
 	// "bold" = lễ âm được nghỉ chính thức
-	var UPCOMING_LUNAR_HOLIDAYS = {
+	const UPCOMING_LUNAR_HOLIDAYS = {
 		"1/1": "bold",
 		"2/1": "bold",
 		"3/1": "bold",
@@ -52,15 +54,15 @@
 		"23/12": "normal"
 	};
 
-	var dayByCell = new WeakMap();
-	var holidayByRow = new WeakMap();
-	var selectedCell = null;
-	var selectedJd = null;
-	var viewMonth = 0;
-	var viewYear = 0;
+	const dayByCell = new WeakMap();
+	const holidayByRow = new WeakMap();
+	let selectedCell = null;
+	let selectedJd = null;
+	let viewMonth = 0;
+	let viewYear = 0;
 
 	function createEl(tag, className, text) {
-		var node = document.createElement(tag);
+		const node = document.createElement(tag);
 		if (className) {
 			node.className = className;
 		}
@@ -71,7 +73,7 @@
 	}
 
 	function createNavButton(action, label, hint, disabled) {
-		var button = createEl("button", null, label);
+		const button = createEl("button", null, label);
 		button.type = "button";
 		button.title = hint;
 		button.disabled = disabled;
@@ -80,20 +82,20 @@
 	}
 
 	function createNavRow(mm, yy) {
-		var row = document.createElement("tr");
+		const row = document.createElement("tr");
 
-		var left = createEl("td", "navi-l");
+		const left = createEl("td", "navi-l");
 		left.colSpan = 2;
 		left.append(
 			createNavButton("prev-year", "<<", "Năm trước", yy - 1 < MIN_YEAR),
 			createNavButton("prev-month", "<", "Tháng trước", mm === 1 && yy - 1 < MIN_YEAR)
 		);
 
-		var title = createEl("td", "tenthang", mm + "/" + yy);
+		const title = createEl("td", "tenthang", `${mm}/${yy}`);
 		title.colSpan = 3;
 		title.dataset.action = "show-month-select";
 
-		var right = createEl("td", "navi-r");
+		const right = createEl("td", "navi-r");
 		right.colSpan = 2;
 		right.append(
 			createNavButton("next-month", ">", "Tháng sau", mm === 12 && yy + 1 > MAX_YEAR),
@@ -105,31 +107,31 @@
 	}
 
 	function createWeekdayRow() {
-		var row = document.createElement("tr");
+		const row = document.createElement("tr");
 		row.dataset.action = "about";
-		for (var i = 0; i < DAYNAMES.length; i++) {
-			row.append(createEl("td", "ngaytuan", DAYNAMES[i]));
+		for (const name of DAYNAMES) {
+			row.append(createEl("td", "ngaytuan", name));
 		}
 		return row;
 	}
 
 	function createDayCell(lunar, sday, smonth, syear) {
-		var today = getToday();
-		var isToday = sday === today.getDate()
+		const today = getToday();
+		const isToday = sday === today.getDate()
 			&& smonth === today.getMonth() + 1
 			&& syear === today.getFullYear();
-		var isHoliday = getHolidayNames(lunar, sday, smonth).length > 0;
+		const isHoliday = getHolidayNames(lunar, sday, smonth).length > 0;
 
-		var cell = createEl("td", isHoliday ? "tet" : (isToday ? "homnay" : "ngaythang"));
+		const cell = createEl("td", isHoliday ? "tet" : (isToday ? "homnay" : "ngaythang"));
 		cell.title = getDayName(lunar);
 		cell.dataset.action = "day-info";
 		cell.dataset.jd = lunar.jd;
-		dayByCell.set(cell, { lunar: lunar, sday: sday, smonth: smonth, syear: syear });
+		dayByCell.set(cell, { lunar, sday, smonth, syear });
 
-		var dow = (lunar.jd + 1) % 7;
-		var solarClass = dow === 0 ? "cn" : (dow === 6 ? "t7" : "t2t6");
-		var lunarLabel = (sday === 1 || lunar.day === 1)
-			? lunar.day + "/" + lunar.month
+		const dow = (lunar.jd + 1) % 7;
+		const solarClass = dow === 0 ? "cn" : (dow === 6 ? "t7" : "t2t6");
+		const lunarLabel = (sday === 1 || lunar.day === 1)
+			? `${lunar.day}/${lunar.month}`
 			: lunar.day;
 		cell.append(
 			createEl("div", solarClass, sday),
@@ -138,23 +140,25 @@
 		return cell;
 	}
 
+	// Lịch cố định 5 hàng: tuần thứ 6 gối lên ô đệm đầu tháng, cùng cột thứ trong tuần.
+	// Luôn vừa vì tháng dài nhất 31 ngày < 35 ô, nên số ngày tràn <= số ô đệm đầu.
 	function createMonthTable(mm, yy) {
-		var days = getMonth(mm, yy);
+		const days = getMonth(mm, yy);
 		if (days.length === 0) {
 			return null;
 		}
-		var leadingBlanks = (days[0].jd + 1) % 7;
-		var body = document.createElement("tbody");
+		const leadingBlanks = (days[0].jd + 1) % 7;
+		const body = document.createElement("tbody");
 		body.append(createNavRow(mm, yy), createWeekdayRow());
 
-		for (var week = 0; week < 6; week++) {
-			if (7 * week >= leadingBlanks + days.length) {
-				break;
-			}
-			var row = document.createElement("tr");
-			for (var slot = 0; slot < 7; slot++) {
-				var index = 7 * week + slot - leadingBlanks;
-				if (index < 0 || index >= days.length) {
+		for (let week = 0; week < WEEKS_PER_MONTH; week++) {
+			const row = document.createElement("tr");
+			for (let slot = 0; slot < 7; slot++) {
+				let index = 7 * week + slot - leadingBlanks;
+				if (index < 0) {
+					index += SLOTS_PER_MONTH;
+				}
+				if (index >= days.length) {
 					row.append(createEl("td", "ngaythang"));
 				} else {
 					row.append(createDayCell(days[index], index + 1, mm, yy));
@@ -163,28 +167,28 @@
 			body.append(row);
 		}
 
-		var table = createEl("table", "thang");
+		const table = createEl("table", "thang");
 		table.append(body);
 		return table;
 	}
 
 	function createYearTable(yy) {
-		var body = document.createElement("tbody");
+		const body = document.createElement("tbody");
 
-		var title = createEl("td", "tennam", "Năm " + getYearCanChi(yy) + " " + yy);
+		const title = createEl("td", "tennam", `Năm ${getYearCanChi(yy)} ${yy}`);
 		title.colSpan = 3;
 		title.dataset.action = "show-year-select";
-		var titleRow = document.createElement("tr");
+		const titleRow = document.createElement("tr");
 		titleRow.append(title);
 		body.append(titleRow);
 
-		var row = null;
-		for (var mm = 1; mm <= 12; mm++) {
+		let row = null;
+		for (let mm = 1; mm <= 12; mm++) {
 			if (mm % 3 === 1) {
 				row = document.createElement("tr");
 			}
-			var cell = document.createElement("td");
-			var month = createMonthTable(mm, yy);
+			const cell = document.createElement("td");
+			const month = createMonthTable(mm, yy);
 			if (month) {
 				cell.append(month);
 			}
@@ -194,16 +198,15 @@
 			}
 		}
 
-		var table = createEl("table", "nam");
+		const table = createEl("table", "nam");
 		table.append(body);
 		return table;
 	}
 
 	function createGioHoangDao(jd) {
-		var cell = createEl("dd", "tin-gio");
-		var parts = getGioHoangDao(jd).split(",");
-		for (var i = 0; i < parts.length; i++) {
-			var gio = parts[i].replace(/\s+/g, " ").trim();
+		const cell = createEl("dd", "tin-gio");
+		for (const part of getGioHoangDao(jd).split(",")) {
+			const gio = part.replace(/\s+/g, " ").trim();
 			if (gio.length > 0) {
 				cell.append(createEl("span", "gio", gio));
 			}
@@ -213,19 +216,19 @@
 
 	// Không kèm "(nhuận)" như tooltip: dòng âm lịch ngay trên đã ghi, và giữ can chi gọn 1 dòng
 	function formatCanChi(lunar) {
-		var cc = getCanChi(lunar);
-		return "Ngày " + cc[0] + ", tháng " + cc[1] + ", năm " + cc[2];
+		const cc = getCanChi(lunar);
+		return `Ngày ${cc[0]}, tháng ${cc[1]}, năm ${cc[2]}`;
 	}
 
 	function getHolidayNames(lunar, sday, smonth) {
-		var names = [];
+		const names = [];
 		if (lunar.leap !== 1) {
-			var lunarName = LUNAR_HOLIDAYS[lunar.day + "/" + lunar.month];
+			const lunarName = LUNAR_HOLIDAYS[`${lunar.day}/${lunar.month}`];
 			if (lunarName) {
 				names.push(lunarName);
 			}
 		}
-		var solarName = SOLAR_HOLIDAYS[sday + "/" + smonth];
+		const solarName = SOLAR_HOLIDAYS[`${sday}/${smonth}`];
 		if (solarName) {
 			names.push(solarName);
 		}
@@ -233,39 +236,38 @@
 	}
 
 	function createDayInfo(lunar, sday, smonth, syear) {
-		var dow = (lunar.jd + 1) % 7;
-		var isLeap = lunar.leap === 1;
+		const dow = (lunar.jd + 1) % 7;
+		const isLeap = lunar.leap === 1;
 
-		var solarClass = "tin-duong" + (dow === 0 ? " tin-cn" : (dow === 6 ? " tin-t7" : ""));
-		var lunarText = "Ngày " + lunar.day + " tháng " + lunar.month
-			+ (isLeap ? " nhuận" : "") + " ÂL";
-		var dates = createEl("div", "tin-ngay");
+		const solarClass = `tin-duong${dow === 0 ? " tin-cn" : (dow === 6 ? " tin-t7" : "")}`;
+		const lunarText = `Ngày ${lunar.day} tháng ${lunar.month}${isLeap ? " nhuận" : ""} ÂL`;
+		const dates = createEl("div", "tin-ngay");
 		dates.append(
-			createEl("div", solarClass, DAYNAMES_FULL[dow] + ", " + sday + "/" + smonth + "/" + syear),
+			createEl("div", solarClass, `${DAYNAMES_FULL[dow]}, ${sday}/${smonth}/${syear}`),
 			createEl("div", isLeap ? "tin-am tin-nhuan" : "tin-am", lunarText)
 		);
 
-		var head = createEl("div", "tin-dau");
+		const head = createEl("div", "tin-dau");
 		head.append(dates);
 
-		var holidays = getHolidayNames(lunar, sday, smonth);
+		const holidays = getHolidayNames(lunar, sday, smonth);
 		if (holidays.length > 0) {
 			head.append(createEl("div", "tin-le", holidays.join(" · ")));
 		}
 
-		var list = createEl("dl", "tin-bang");
+		const list = createEl("dl", "tin-bang");
 		list.append(
 			createEl("dt", null, "Can chi"),
 			createEl("dd", null, formatCanChi(lunar)),
 			createEl("dt", null, "Giờ đầu"),
-			createEl("dd", null, getCanHour0(lunar.jd) + " " + CHI[0]),
+			createEl("dd", null, `${getCanHour0(lunar.jd)} ${CHI[0]}`),
 			createEl("dt", null, "Tiết"),
 			createEl("dd", null, TIETKHI[getSunLongitude(lunar.jd + 1, 7.0)]),
 			createEl("dt", null, "Giờ hoàng đạo"),
 			createGioHoangDao(lunar.jd)
 		);
 
-		var info = document.createDocumentFragment();
+		const info = document.createDocumentFragment();
 		info.append(head, list);
 		return info;
 	}
@@ -286,7 +288,7 @@
 	}
 
 	function showDayInfoForCell(cell) {
-		var day = dayByCell.get(cell);
+		const day = dayByCell.get(cell);
 		if (!day) {
 			return;
 		}
@@ -295,35 +297,34 @@
 	}
 
 	function showTodayInfo() {
-		var today = getToday();
+		const today = getToday();
 		showDayInfo(getCurrentLunarToday(), today.getDate(), today.getMonth() + 1, today.getFullYear());
 	}
 
 	function collectUpcomingLunarHolidays(monthCount) {
-		var today = getToday();
-		var todayJd = getCurrentLunarToday().jd;
-		var items = [];
+		const today = getToday();
+		const todayJd = getCurrentLunarToday().jd;
+		const items = [];
 
-		for (var k = 0; k < monthCount; k++) {
-			var offset = today.getMonth() + k;
-			var mm = (offset % 12) + 1;
-			var yy = today.getFullYear() + Math.floor(offset / 12);
+		for (let k = 0; k < monthCount; k++) {
+			const offset = today.getMonth() + k;
+			const mm = (offset % 12) + 1;
+			const yy = today.getFullYear() + Math.floor(offset / 12);
 			if (yy > MAX_YEAR) {
 				break;
 			}
-			var days = getMonth(mm, yy);
-			for (var i = 0; i < days.length; i++) {
-				var lunar = days[i];
+			const days = getMonth(mm, yy);
+			for (const [i, lunar] of days.entries()) {
 				if (lunar.jd < todayJd || lunar.leap === 1) {
 					continue;
 				}
-				var key = lunar.day + "/" + lunar.month;
-				var name = LUNAR_HOLIDAYS[key];
+				let key = `${lunar.day}/${lunar.month}`;
+				let name = LUNAR_HOLIDAYS[key];
 				if (!name || !UPCOMING_LUNAR_HOLIDAYS[key]) {
 					continue;
 				}
 
-				var last = items[items.length - 1];
+				const last = items.at(-1);
 				if (TET_CONTINUATION[key]) {
 					if (last && last.endJd === lunar.jd - 1 && last.name === LUNAR_HOLIDAYS["1/1"]) {
 						last.endJd = lunar.jd;
@@ -341,7 +342,7 @@
 				items.push({
 					jd: lunar.jd,
 					endJd: lunar.jd,
-					lunar: lunar,
+					lunar,
 					lunarDay: lunar.day,
 					lunarMonth: lunar.month,
 					endLunarDay: lunar.day,
@@ -351,7 +352,7 @@
 					endDay: i + 1,
 					endMonth: mm,
 					endYear: yy,
-					name: name,
+					name,
 					isMajor: UPCOMING_LUNAR_HOLIDAYS[key] === "bold"
 				});
 			}
@@ -361,19 +362,19 @@
 
 	function formatHolidaySolar(item) {
 		if (item.endJd === item.jd) {
-			return item.sday + "/" + item.smonth + "/" + item.syear;
+			return `${item.sday}/${item.smonth}/${item.syear}`;
 		}
 		if (item.smonth === item.endMonth && item.syear === item.endYear) {
-			return item.sday + "–" + item.endDay + "/" + item.smonth + "/" + item.syear;
+			return `${item.sday}–${item.endDay}/${item.smonth}/${item.syear}`;
 		}
-		return item.sday + "/" + item.smonth + "–" + item.endDay + "/" + item.endMonth + "/" + item.endYear;
+		return `${item.sday}/${item.smonth}–${item.endDay}/${item.endMonth}/${item.endYear}`;
 	}
 
 	function formatHolidayLunar(item) {
-		var day = item.endLunarDay === item.lunarDay
+		const day = item.endLunarDay === item.lunarDay
 			? item.lunarDay
-			: item.lunarDay + "–" + item.endLunarDay;
-		return day + "/" + item.lunarMonth + " ÂL";
+			: `${item.lunarDay}–${item.endLunarDay}`;
+		return `${day}/${item.lunarMonth} ÂL`;
 	}
 
 	function formatCountdown(days) {
@@ -383,13 +384,13 @@
 		if (days === 1) {
 			return "mai";
 		}
-		return "còn " + days + " ngày";
+		return `còn ${days} ngày`;
 	}
 
 	function createHolidayRow(item, isNext) {
-		var row = createEl("li", "le-dong");
+		const row = createEl("li", "le-dong");
 		row.dataset.action = "holiday-jump";
-		row.title = "Xem ngày " + formatHolidaySolar(item);
+		row.title = `Xem ngày ${formatHolidaySolar(item)}`;
 		holidayByRow.set(row, item);
 		row.append(
 			createEl("span", "le-duong", formatHolidaySolar(item)),
@@ -403,29 +404,29 @@
 	}
 
 	function createHolidayList() {
-		var items = collectUpcomingLunarHolidays(UPCOMING_MONTHS);
+		const items = collectUpcomingLunarHolidays(UPCOMING_MONTHS);
 		if (items.length === 0) {
 			return null;
 		}
-		var list = createEl("ul", "le-ds");
-		for (var i = 0; i < items.length; i++) {
-			list.append(createHolidayRow(items[i], i === 0));
+		const list = createEl("ul", "le-ds");
+		for (const [i, item] of items.entries()) {
+			list.append(createHolidayRow(item, i === 0));
 		}
 
-		var box = document.createDocumentFragment();
+		const box = document.createDocumentFragment();
 		box.append(createEl("div", "le-dau", "Ngày lễ âm lịch sắp tới"), list);
 		return box;
 	}
 
 	function showUpcomingHolidays() {
-		var box = createHolidayList();
+		const box = createHolidayList();
 		if (box) {
 			document.getElementById("holidays").replaceChildren(box);
 		}
 	}
 
 	function jumpToHoliday(row) {
-		var item = holidayByRow.get(row);
+		const item = holidayByRow.get(row);
 		if (!item) {
 			return;
 		}
@@ -435,7 +436,7 @@
 	}
 
 	function showMonth(mm, yy) {
-		var table = createMonthTable(mm, yy);
+		const table = createMonthTable(mm, yy);
 		if (!table) {
 			return;
 		}
@@ -444,7 +445,7 @@
 		document.getElementById("content").replaceChildren(table);
 		selectedCell = null;
 		if (selectedJd !== null) {
-			selectCell(document.querySelector('td[data-jd="' + selectedJd + '"]'));
+			selectCell(document.querySelector(`td[data-jd="${selectedJd}"]`));
 		}
 	}
 
@@ -455,8 +456,8 @@
 	}
 
 	function shiftMonth(delta) {
-		var mm = viewMonth + delta;
-		var yy = viewYear;
+		let mm = viewMonth + delta;
+		let yy = viewYear;
 		if (mm < 1) {
 			mm = 12;
 			yy -= 1;
@@ -468,7 +469,7 @@
 	}
 
 	function showMonthSelect() {
-		var home = "http://www.informatik.uni-leipzig.de/~duc/amlich/JavaScript/";
+		const home = "http://www.informatik.uni-leipzig.de/~duc/amlich/JavaScript/";
 		window.open(home, "win2702", "menubar=yes,scrollbars=yes,status=yes,toolbar=yes,resizable=yes,location=yes");
 	}
 
@@ -481,9 +482,9 @@
 	}
 
 	function handleCalendarClick(event) {
-		var node = event.target;
+		let node = event.target;
 		while (node && node !== event.currentTarget) {
-			switch (node.dataset && node.dataset.action) {
+			switch (node.dataset?.action) {
 				case "day-info":
 					showDayInfoForCell(node);
 					return;
@@ -516,7 +517,7 @@
 		}
 	}
 
-	window.onload = function() {
+	window.onload = () => {
 		document.getElementById("content").addEventListener("click", handleCalendarClick);
 		document.getElementById("holidays").addEventListener("click", handleCalendarClick);
 		showTodayInfo();

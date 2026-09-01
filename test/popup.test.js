@@ -128,21 +128,42 @@ test("điều hướng tháng và năm", async (t) => {
 		assert.equal(env.getMonthTitle(), "9/2025");
 	});
 
-	await t.test("mọi tháng đều render đủ ngày, liên tục từ 1", () => {
+	await t.test("mọi tháng đều render đủ ngày, không thiếu không lặp", () => {
 		const env = createPopupEnv();
 		for (const [mm, yy] of [[2, 2026], [8, 2026], [5, 2027], [1, 2027], [2, 2028]]) {
 			assert.ok(env.goToMonth(mm, yy), `không tới được ${mm}/${yy}`);
+			const ndays = new Date(yy, mm, 0).getDate();
 			const solarDays = env.getDayCells().map((cell) => Number(env.getSolarText(cell)));
-			assert.deepEqual(solarDays, solarDays.map((_, index) => index + 1));
-			assert.equal(new Date(yy, mm, 0).getDate(), solarDays.length);
+			assert.deepEqual(
+				solarDays.slice().sort((a, b) => a - b),
+				Array.from({ length: ndays }, (_, index) => index + 1),
+				`${mm}/${yy} render sai tập ngày`
+			);
 		}
 	});
 
-	await t.test("tháng ngắn không sinh tuần trống ở cuối", () => {
+	await t.test("mọi tháng đều cố định 5 hàng tuần", () => {
 		const env = createPopupEnv();
-		assert.ok(env.goToMonth(2, 2026));
-		const weekRows = env.content.querySelectorAll("tr").length - 2;
-		assert.equal(weekRows, 4);
+		for (const [mm, yy] of [[2, 2026], [2, 2015], [8, 2026], [1, 2027], [5, 2027]]) {
+			assert.ok(env.goToMonth(mm, yy), `không tới được ${mm}/${yy}`);
+			assert.equal(env.content.querySelectorAll("tr").length - 2, 5, `${mm}/${yy} sai số hàng`);
+		}
+	});
+
+	await t.test("tháng cần 6 tuần thì tuần cuối gối lên ô đệm đầu, đúng cột thứ", () => {
+		const env = createPopupEnv();
+		const firstWeek = () => {
+			const cells = env.content.querySelectorAll("tr")[2].children;
+			return [0, 1, 2, 3, 4, 5, 6].map((slot) =>
+				cells[slot].dataset.action ? env.getSolarText(cells[slot]) : null
+			);
+		};
+		assert.ok(env.goToMonth(1, 2027));
+		assert.deepEqual(firstWeek(), ["31", null, null, null, null, "1", "2"]);
+		assert.ok(env.goToMonth(5, 2027));
+		assert.deepEqual(firstWeek(), ["30", "31", null, null, null, null, "1"]);
+		assert.ok(env.goToMonth(9, 2026));
+		assert.deepEqual(firstWeek(), [null, null, "1", "2", "3", "4", "5"]);
 	});
 });
 

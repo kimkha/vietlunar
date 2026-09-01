@@ -25,7 +25,7 @@
       }
 
       body {
-        width: 425px;
+        width: 800px;
         overflow-x: hidden;
         margin: 0;
         padding: 6px;
@@ -36,6 +36,21 @@
         font-size: 14px;
         color: var(--plum);
         -webkit-font-smoothing: antialiased;
+      }
+
+      .khung {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .cot-lich {
+        flex: 0 0 364px;
+      }
+
+      .cot-tin {
+        flex: 1 1 auto;
+        min-width: 0;
       }
 
       .thang {
@@ -178,8 +193,8 @@
       .homnay,
       .tet {
         position: relative;
-        height: 59px;
-        padding: 6px;
+        height: 52px;
+        padding: 5px;
         vertical-align: top;
         cursor: pointer;
         transition: background-color 0.15s ease;
@@ -214,7 +229,7 @@
       .t2t6,
       .t7,
       .cn {
-        font-size: 19px;
+        font-size: 18px;
         font-weight: 600;
         line-height: 1.1;
         text-align: left;
@@ -235,8 +250,8 @@
       .am,
       .am2 {
         position: absolute;
-        right: 6px;
-        bottom: 6px;
+        right: 5px;
+        bottom: 4px;
         font-size: 11px;
         font-weight: 500;
         line-height: 1.1;
@@ -273,7 +288,6 @@
       }
 
       #dayinfo {
-        margin-top: 6px;
         border-radius: 12px;
         overflow: hidden;
         background: var(--cream);
@@ -287,15 +301,16 @@
 
       .tin-dau {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 7px 8px 6px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        padding: 9px 10px 10px;
         background: linear-gradient(180deg, var(--butter) 0%, var(--butter-deep) 100%);
         border-bottom: 1px solid rgba(51, 0, 51, 0.18);
       }
 
       .tin-duong {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 700;
         line-height: 1.2;
         color: #1a1a1a;
@@ -311,7 +326,7 @@
 
       .tin-am {
         margin-top: 2px;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 600;
         line-height: 1.2;
         color: var(--lunar);
@@ -327,10 +342,8 @@
       }
 
       .tin-le {
-        flex: 0 1 auto;
-        margin-left: auto;
-        padding: 1px 8px;
-        text-align: right;
+        flex: 0 0 auto;
+        padding: 2px 9px;
         border: 1px solid rgba(51, 0, 51, 0.2);
         border-radius: 999px;
         background-color: var(--tet);
@@ -342,24 +355,61 @@
 
       .tin-bang {
         display: grid;
-        grid-template-columns: 63px 1fr;
-        gap: 4px 6px;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px 12px;
         margin: 0;
-        padding: 7px 8px;
-        font-size: 12px;
+        padding: 9px 10px 11px;
+        font-size: 13px;
         line-height: 1.35;
       }
 
       .tin-bang dt {
-        font-size: 11px;
+        font-size: 10.5px;
         font-weight: 600;
-        text-align: right;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
         color: var(--ink-soft);
+      }
+
+      .tin-bang dt:nth-of-type(n + 2) {
+        margin-top: 9px;
       }
 
       .tin-bang dd {
         margin: 0;
         color: var(--plum);
+      }
+
+      .tin-bang dt:nth-of-type(1) {
+        grid-area: 1 / 1 / 2 / 3;
+      }
+
+      .tin-bang dd:nth-of-type(1) {
+        grid-area: 2 / 1 / 3 / 3;
+      }
+
+      .tin-bang dt:nth-of-type(2) {
+        grid-area: 3 / 1 / 4 / 2;
+      }
+
+      .tin-bang dd:nth-of-type(2) {
+        grid-area: 4 / 1 / 5 / 2;
+      }
+
+      .tin-bang dt:nth-of-type(3) {
+        grid-area: 3 / 2 / 4 / 3;
+      }
+
+      .tin-bang dd:nth-of-type(3) {
+        grid-area: 4 / 2 / 5 / 3;
+      }
+
+      .tin-bang dt:nth-of-type(4) {
+        grid-area: 5 / 1 / 6 / 3;
+      }
+
+      .tin-bang dd:nth-of-type(4) {
+        grid-area: 6 / 1 / 7 / 3;
       }
 
       .tin-gio {
@@ -467,9 +517,15 @@
     <script src="amlich.js"></script>
   </head>
   <body>
-    <div id="content"></div>
-    <div id="dayinfo"></div>
-    <div id="holidays"></div>
+    <div class="khung">
+      <div class="cot-lich">
+        <div id="content"></div>
+        <div id="holidays"></div>
+      </div>
+      <div class="cot-tin">
+        <div id="dayinfo"></div>
+      </div>
+    </div>
     <script src="popup.js"></script>
   </body>
 </html>

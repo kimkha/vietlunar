@@ -1,8 +1,8 @@
 (function(global){
 
-	var today, currentLunarYear, currentLunarDate, currentMonth, currentYear;
+	let today, currentLunarYear, currentLunarDate, currentMonth, currentYear;
 
-	var TK19 = new Array(
+	const TK19 = [
 		0x30baa3, 0x56ab50, 0x422ba0, 0x2cab61, 0x52a370, 0x3c51e8, 0x60d160, 0x4ae4b0, 0x376926, 0x58daa0,
 		0x445b50, 0x3116d2, 0x562ae0, 0x3ea2e0, 0x28e2d2, 0x4ec950, 0x38d556, 0x5cb520, 0x46b690, 0x325da4,
 		0x5855d0, 0x4225d0, 0x2ca5b3, 0x52a2b0, 0x3da8b7, 0x60a950, 0x4ab4a0, 0x35b2a5, 0x5aad50, 0x4455b0,
@@ -13,9 +13,9 @@
 		0x3cea6a, 0x62da90, 0x4e5ad0, 0x392ad6, 0x5e2ae0, 0x4892e0, 0x32cad5, 0x56c950, 0x40d4a0, 0x2bd4a3,
 		0x50b690, 0x3a57a7, 0x6055b0, 0x4c25d0, 0x3695b5, 0x5a92b0, 0x44a950, 0x2ed954, 0x54b4a0, 0x3cb550,
 		0x286b52, 0x4e55b0, 0x3a2776, 0x5e2570, 0x4852b0, 0x32aaa5, 0x56e950, 0x406aa0, 0x2abaa3, 0x50ab50
-	); /* Years 2000-2099 */
+	]; /* Years 2000-2099 */
 
-	var TK20 = new Array(
+	const TK20 = [
 		0x3c4bd8, 0x624ae0, 0x4ca570, 0x3854d5, 0x5cd260, 0x44d950, 0x315554, 0x5656a0, 0x409ad0, 0x2a55d2,
 		0x504ae0, 0x3aa5b6, 0x60a4d0, 0x48d250, 0x33d255, 0x58b540, 0x42d6a0, 0x2cada2, 0x5295b0, 0x3f4977,
 		0x644970, 0x4ca4b0, 0x36b4b5, 0x5c6a50, 0x466d50, 0x312b54, 0x562b60, 0x409570, 0x2c52f2, 0x504970,
@@ -26,9 +26,9 @@
 		0x4896d0, 0x344dd5, 0x5a4ad0, 0x42a4d0, 0x2cd4b4, 0x52b250, 0x3cd558, 0x60b540, 0x4ab5a0, 0x3755a6,
 		0x5c95b0, 0x4649b0, 0x30a974, 0x56a4b0, 0x40aa50, 0x29aa52, 0x4e6d20, 0x39ad47, 0x5eab60, 0x489370,
 		0x344af5, 0x5a4970, 0x4464b0, 0x2c74a3, 0x50ea50, 0x3d6a58, 0x6256a0, 0x4aaad0, 0x3696d5, 0x5c92e0
-	); /* Years 1900-1999 */
+	]; /* Years 1900-1999 */
 
-	var TK21 = new Array(
+	const TK21 = [
 		0x46c960, 0x2ed954, 0x54d4a0, 0x3eda50, 0x2a7552, 0x4e56a0, 0x38a7a7, 0x5ea5d0, 0x4a92b0, 0x32aab5,
 		0x58a950, 0x42b4a0, 0x2cbaa4, 0x50ad50, 0x3c55d9, 0x624ba0, 0x4ca5b0, 0x375176, 0x5c5270, 0x466930,
 		0x307934, 0x546aa0, 0x3ead50, 0x2a5b52, 0x504b60, 0x38a6e6, 0x5ea4e0, 0x48d260, 0x32ea65, 0x56d520,
@@ -39,9 +39,9 @@
 		0x5252b0, 0x3ca9b8, 0x62a930, 0x4ab490, 0x34b6a6, 0x5aad50, 0x4655a0, 0x2eab64, 0x54a570, 0x4052b0,
 		0x2ab173, 0x4e6930, 0x386b37, 0x5e6aa0, 0x48ad50, 0x332ad5, 0x582b60, 0x42a570, 0x2e52e4, 0x50d160,
 		0x3ae958, 0x60d520, 0x4ada90, 0x355aa6, 0x5a56d0, 0x462ae0, 0x30a9d4, 0x54a2d0, 0x3ed150, 0x28e952
-	); /* Years 2000-2099 */
+	]; /* Years 2000-2099 */
 
-	var TK22 = new Array(
+	const TK22 = [
 			0x4eb520, 0x38d727, 0x5eada0, 0x4a55b0, 0x362db5, 0x5a45b0, 0x44a2b0, 0x2eb2b4, 0x54a950, 0x3cb559,
 			0x626b20, 0x4cad50, 0x385766, 0x5c5370, 0x484570, 0x326574, 0x5852b0, 0x406950, 0x2a7953, 0x505aa0,
 			0x3baaa7, 0x5ea6d0, 0x4a4ae0, 0x35a2e5, 0x5aa550, 0x42d2a0, 0x2de2a4, 0x52d550, 0x3e5abb, 0x6256a0,
@@ -52,28 +52,30 @@
 			0x5c6950, 0x4674a0, 0x31b2a5, 0x54ad50, 0x4055a0, 0x2aab73, 0x522570, 0x3a5377, 0x6052b0, 0x4a6950,
 			0x346d56, 0x585aa0, 0x42ab50, 0x2e56d4, 0x544ae0, 0x3ca570, 0x2864d2, 0x4cd260, 0x36eaa6, 0x5ad550,
 			0x465aa0, 0x30ada5, 0x5695d0, 0x404ad0, 0x2aa9b3, 0x50a4d0, 0x3ad2b7, 0x5eb250, 0x48b540, 0x33d556
-	); /* Years 2100-2199 */
+	]; /* Years 2100-2199 */
 
-	var CAN = new Array("Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý");
-	var CHI = new Array("Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi");
-	var TUAN = new Array("Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy");
-	var GIO_HD = new Array("110100101100", "001101001011", "110011010010", "101100110100", "001011001101", "010010110011");
-	var TIETKHI = new Array("Xuân phân", "Thanh minh", "Cốc vũ", "Lập hạ", "Tiểu mãn", "Mang chủng",
+	const CAN = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+	const CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+	const TUAN = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
+	const GIO_HD = ["110100101100", "001101001011", "110011010010", "101100110100", "001011001101", "010010110011"];
+	const TIETKHI = ["Xuân phân", "Thanh minh", "Cốc vũ", "Lập hạ", "Tiểu mãn", "Mang chủng",
 		"Hạ chí", "Tiểu thử", "Đại thử", "Lập thu", "Xử thử", "Bạch lộ",
 		"Thu phân", "Hàn lộ", "Sương giáng", "Lập đông", "Tiểu tuyết", "Đại tuyết",
 		"Đông chí", "Tiểu hàn", "Đại hàn", "Lập xuân", "Vũ Thủy", "Kinh trập"
-	);
+	];
 
 	/* Create lunar date object, stores (lunar) date, month, year, leap month indicator, and Julian date number */
-	function LunarDate(dd, mm, yy, leap, jd) {
-		this.day = dd;
-		this.month = mm;
-		this.year = yy;
-		this.leap = leap;
-		this.jd = jd;
+	class LunarDate {
+		constructor(dd, mm, yy, leap, jd) {
+			this.day = dd;
+			this.month = mm;
+			this.year = yy;
+			this.leap = leap;
+			this.jd = jd;
+		}
 	}
 
-	var PI = Math.PI;
+	const PI = Math.PI;
 
 	/* Discard the fractional part of a number, e.g., INT(3.2) = 3 */
 	function INT(d) {
@@ -81,16 +83,16 @@
 	}
 
 	function jdn(dd, mm, yy) {
-		var a = INT((14 - mm) / 12);
-		var y = yy+4800-a;
-		var m = mm+12*a-3;
-		var jd = dd + INT((153*m+2)/5) + 365*y + INT(y/4) - INT(y/100) + INT(y/400) - 32045;
+		const a = INT((14 - mm) / 12);
+		const y = yy+4800-a;
+		const m = mm+12*a-3;
+		const jd = dd + INT((153*m+2)/5) + 365*y + INT(y/4) - INT(y/100) + INT(y/400) - 32045;
 		return jd;
 		//return 367*yy - INT(7*(yy+INT((mm+9)/12))/4) - INT(3*(INT((yy+(mm-9)/7)/100)+1)/4) + INT(275*mm/9)+dd+1721029;
 	}
 
 	function jdn2date(jd) {
-		var Z, A, alpha, B, C, D, E, dd, mm, yyyy, F;
+		let Z, A, alpha, B, C, D, E, dd, mm, yyyy, F;
 		Z = jd;
 		if (Z < 2299161) {
 		  A = Z;
@@ -113,13 +115,13 @@
 		} else {
 		  yyyy = C - 4716;
 		}
-		return new Array(dd, mm, yyyy);
+		return [dd, mm, yyyy];
 	}
 
 	function decodeLunarYear(yy, k) {
-		var monthLengths, regularMonths, offsetOfTet, leapMonth, leapMonthLength, solarNY, currentJD, j, mm;
-		var ly = new Array();
-		monthLengths = new Array(29, 30);
+		let monthLengths, regularMonths, offsetOfTet, leapMonth, leapMonthLength, solarNY, currentJD, j, mm;
+		const ly = [];
+		monthLengths = [29, 30];
 		regularMonths = new Array(12);
 		offsetOfTet = k >> 17;
 		leapMonth = k & 0xf;
@@ -127,11 +129,11 @@
 		solarNY = jdn(1, 1, yy);
 		currentJD = solarNY+offsetOfTet;
 		j = k >> 4;
-		for(i = 0; i < 12; i++) {
+		for(let i = 0; i < 12; i++) {
 			regularMonths[12 - i - 1] = monthLengths[j & 0x1];
 			j >>= 1;
 		}
-		if (leapMonth == 0) {
+		if (leapMonth === 0) {
 			for(mm = 1; mm <= 12; mm++) {
 				ly.push(new LunarDate(1, mm, yy, 0, currentJD));
 				currentJD += regularMonths[mm-1];
@@ -152,7 +154,7 @@
 	}
 
 	function getYearInfo(yyyy) {
-		var yearCode;
+		let yearCode;
 		if (yyyy < 1900) {
 			yearCode = TK19[yyyy - 1800];
 		} else if (yyyy < 2000) {
@@ -165,24 +167,24 @@
 		return decodeLunarYear(yyyy, yearCode);
 	}
 
-	var FIRST_DAY = jdn(25, 1, 1800); // Tet am lich 1800
-	var LAST_DAY = jdn(31, 12, 2199);
+	const FIRST_DAY = jdn(25, 1, 1800); // Tet am lich 1800
+	const LAST_DAY = jdn(31, 12, 2199);
 
 	function findLunarDate(jd, ly) {
 		if (jd > LAST_DAY || jd < FIRST_DAY || ly[0].jd > jd) {
 			return new LunarDate(0, 0, 0, 0, jd);
 		}
-		var i = ly.length-1;
+		let i = ly.length-1;
 		while (jd < ly[i].jd) {
 			i--;
 		}
-		var off = jd - ly[i].jd;
-		ret = new LunarDate(ly[i].day+off, ly[i].month, ly[i].year, ly[i].leap, jd);
+		const off = jd - ly[i].jd;
+		const ret = new LunarDate(ly[i].day+off, ly[i].month, ly[i].year, ly[i].leap, jd);
 		return ret;
 	}
 
 	function getLunarDate(dd, mm, yyyy) {
-		var ly, jd;
+		let ly, jd;
 		//if (yyyy < 1800 || 2199 < yyyy) {
 			//return new LunarDate(0, 0, 0, 0, 0);
 		//}
@@ -199,7 +201,7 @@
 	 * Algorithm from: "Astronomical Algorithms" by Jean Meeus, 1998
 	 */
 	function SunLongitude(jdn) {
-		var T, T2, dr, M, L0, DL, lambda, theta, omega;
+		let T, T2, dr, M, L0, DL, lambda, theta, omega;
 		T = (jdn - 2451545.0 ) / 36525; // Time in Julian centuries from 2000-01-01 12:00:00 GMT
 		T2 = T*T;
 		dr = PI/180; // degree to radian
@@ -228,7 +230,7 @@
 	}
 
 	function getMonth(mm, yy) {
-		var ly1, ly2, tet1, jd1, jd2, mm1, yy1, result, i;
+		let ly1, ly2, tet1, jd1, jd2, mm1, yy1, result, i;
 		if (mm < 12) {
 			mm1 = mm + 1;
 			yy1 = yy;
@@ -241,7 +243,7 @@
 		ly1 = getYearInfo(yy);
 		//alert('1/'+mm+'/'+yy+' = '+jd1+'; 1/'+mm1+'/'+yy1+' = '+jd2);
 		tet1 = ly1[0].jd;
-		result = new Array();
+		result = [];
 		if (tet1 <= jd1) { /* tet(yy) = tet1 < jd1 < jd2 <= 1.1.(yy+1) < tet(yy+1) */
 			for (i = jd1; i < jd2; i++) {
 				result.push(findLunarDate(i, ly1));
@@ -264,16 +266,16 @@
 	}
 
 	function getDayName(lunarDate) {
-		if (lunarDate.day == 0) {
+		if (lunarDate.day === 0) {
 			return "";
 		}
-		var cc = getCanChi(lunarDate);
-		var month = lunarDate.leap == 1 ? cc[1] + " (nhuận)" : cc[1];
-		return "Ngày " + cc[0] + ", tháng " + month + ", năm " + cc[2];
+		const cc = getCanChi(lunarDate);
+		const month = lunarDate.leap === 1 ? `${cc[1]} (nhuận)` : cc[1];
+		return `Ngày ${cc[0]}, tháng ${month}, năm ${cc[2]}`;
 	}
 
 	function getYearCanChi(year) {
-		return CAN[(year+6) % 10] + " " + CHI[(year+8) % 12];
+		return `${CAN[(year+6) % 10]} ${CHI[(year+8) % 12]}`;
 	}
 
 	/*
@@ -284,54 +286,46 @@
 	}
 
 	function getCanChi(lunar) {
-		var dayName, monthName, yearName;
-		dayName = CAN[(lunar.jd + 9) % 10] + " " + CHI[(lunar.jd+1)%12];
-		monthName = CAN[(lunar.year*12+lunar.month+3) % 10] + " " + CHI[(lunar.month+1)%12];
-		yearName = getYearCanChi(lunar.year);
-		return new Array(dayName, monthName, yearName);
+		const dayName = `${CAN[(lunar.jd + 9) % 10]} ${CHI[(lunar.jd+1)%12]}`;
+		const monthName = `${CAN[(lunar.year*12+lunar.month+3) % 10]} ${CHI[(lunar.month+1)%12]}`;
+		const yearName = getYearCanChi(lunar.year);
+		return [dayName, monthName, yearName];
 	}
 
 	function getDayString(lunar, solarDay, solarMonth, solarYear) {
-		var s;
-		var dayOfWeek = TUAN[(lunar.jd + 1) % 7];
-		s = dayOfWeek + " " + solarDay + "/" + solarMonth + "/" + solarYear;
-		s += " -+- ";
-		s = s + "Ngày " + lunar.day+" tháng "+lunar.month;
-		if (lunar.leap == 1) {
-			s = s + " nhuận";
-		}
-		return s;
+		const dayOfWeek = TUAN[(lunar.jd + 1) % 7];
+		const leap = lunar.leap === 1 ? " nhuận" : "";
+		return `${dayOfWeek} ${solarDay}/${solarMonth}/${solarYear} -+- Ngày ${lunar.day} tháng ${lunar.month}${leap}`;
 	}
 
 	function getTodayString() {
-		var s = getDayString(currentLunarDate, today.getDate(), today.getMonth()+1, today.getFullYear());
-		s += " năm " + getYearCanChi(currentLunarDate.year);
-		return s;
+		const s = getDayString(currentLunarDate, today.getDate(), today.getMonth()+1, today.getFullYear());
+		return `${s} năm ${getYearCanChi(currentLunarDate.year)}`;
 	}
 
 	function getCurrentTime() {
 		today = new Date();
-		var Std = today.getHours();
-		var Min = today.getMinutes();
-		var Sec = today.getSeconds();
-		var s1  = ((Std < 10) ? "0" + Std : Std);
-		var s2  = ((Min < 10) ? "0" + Min : Min);
+		const Std = today.getHours();
+		const Min = today.getMinutes();
+		const Sec = today.getSeconds();
+		const s1  = String(Std).padStart(2, "0");
+		const s2  = String(Min).padStart(2, "0");
 		//var s3  = ((Sec < 10) ? "0" + Sec : Sec);
 		//return s1 + ":" + s2 + ":" + s3;
-		return s1 + ":" + s2;
+		return `${s1}:${s2}`;
 	}
 
 	function getGioHoangDao(jd) {
-		var chiOfDay = (jd+1) % 12;
-		var gioHD = GIO_HD[chiOfDay % 6]; // same values for Ty' (1) and Ngo. (6), for Suu and Mui etc.
-		var ret = "";
-		var count = 0;
-		for (var i = 0; i < 12; i++) {
-			if (gioHD.charAt(i) == '1') {
+		const chiOfDay = (jd+1) % 12;
+		const gioHD = GIO_HD[chiOfDay % 6]; // same values for Ty' (1) and Ngo. (6), for Suu and Mui etc.
+		let ret = "";
+		let count = 0;
+		for (let i = 0; i < 12; i++) {
+			if (gioHD.charAt(i) === '1') {
 				ret += CHI[i];
-				ret += ' ('+(i*2+23)%24+'-'+(i*2+1)%24+')';
+				ret += ` (${(i*2+23)%24}-${(i*2+1)%24})`;
 				if (count++ < 5) ret += ', ';
-				if (count == 3) ret += '\n';
+				if (count === 3) ret += '\n';
 			}
 		}
 		return ret;

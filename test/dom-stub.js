@@ -203,14 +203,17 @@ function createPopupEnv(options) {
 
 	const content = new StubNode("div");
 	const dayinfo = new StubNode("div");
+	const holidays = new StubNode("div");
 	const alerts = [];
 	const openedWindows = [];
 	let printCalls = 0;
 
+	const elementsById = { content: content, dayinfo: dayinfo, holidays: holidays };
+
 	context.document = {
 		createElement: (tag) => new StubNode(tag),
 		createDocumentFragment: () => new StubNode(""),
-		getElementById: (id) => (id === "content" ? content : id === "dayinfo" ? dayinfo : null),
+		getElementById: (id) => elementsById[id] || null,
 		querySelector: (selector) => content.querySelector(selector),
 	};
 	context.window = {
@@ -226,10 +229,12 @@ function createPopupEnv(options) {
 
 	const getDayCells = () => content.querySelectorAll('td[data-action="day-info"]');
 	const getButton = (action) => content.querySelectorAll("button").find((b) => b.dataset.action === action);
+	const getHolidayRows = () => holidays.querySelectorAll('li[data-action="holiday-jump"]');
 
 	return {
 		content,
 		dayinfo,
+		holidays,
 		alerts,
 		openedWindows,
 		getPrintCalls: () => printCalls,
@@ -248,6 +253,28 @@ function createPopupEnv(options) {
 		getInfoValues: () => dayinfo.querySelectorAll("dd").map((dd) => dd.textContent),
 		getInfoLabels: () => dayinfo.querySelectorAll("dt").map((dt) => dt.textContent),
 		getGioChips: () => dayinfo.querySelectorAll(".gio").map((span) => span.textContent),
+
+		getHolidayTitle: () => {
+			const node = holidays.querySelector(".le-dau");
+			return node ? node.textContent : null;
+		},
+		getHolidayRows,
+		getHolidays: () =>
+			getHolidayRows().map((row) => ({
+				solar: row.querySelector(".le-duong").textContent,
+				lunar: row.querySelector(".le-am").textContent,
+				name: row.querySelector(".le-ten").textContent,
+				major: row.querySelector(".le-ten").classList.contains("le-chinh"),
+				countdown: row.querySelector(".le-con") ? row.querySelector(".le-con").textContent : null,
+			})),
+		clickHoliday: (name) => {
+			const row = getHolidayRows().find((r) => r.querySelector(".le-ten").textContent === name);
+			if (!row) {
+				throw new Error("no holiday row for " + name);
+			}
+			holidays.dispatch("click", row);
+			return row;
+		},
 
 		clickAction: (action) => {
 			const button = getButton(action);
@@ -288,6 +315,7 @@ function createPopupEnv(options) {
 
 		serializeContent: () => serialize(content),
 		serializeInfo: () => serialize(dayinfo),
+		serializeHolidays: () => serialize(holidays),
 	};
 }
 

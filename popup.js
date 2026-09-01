@@ -5,6 +5,7 @@
 	var DAYNAMES_FULL = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
 	var MIN_YEAR = 1800;
 	var MAX_YEAR = 2199;
+	var UPCOMING_MONTHS = 12;
 
 	var LUNAR_HOLIDAYS = {
 		"1/1": "Tết Nguyên Đán",
@@ -34,7 +35,25 @@
 		"25/12": "Lễ Giáng sinh"
 	};
 
+	// Mùng 2 và 3 gộp vào dòng Tết Nguyên Đán của mùng 1 trong box "sắp tới"
+	var TET_CONTINUATION = { "2/1": true, "3/1": true };
+
+	// Chốt danh sách cho box "sắp tới": thêm khoá vào LUNAR_HOLIDAYS không tự vào box
+	// "bold" = lễ âm được nghỉ chính thức
+	var UPCOMING_LUNAR_HOLIDAYS = {
+		"1/1": "bold",
+		"2/1": "bold",
+		"3/1": "bold",
+		"15/1": "normal",
+		"10/3": "bold",
+		"5/5": "normal",
+		"15/7": "normal",
+		"15/8": "normal",
+		"23/12": "normal"
+	};
+
 	var dayByCell = new WeakMap();
+	var holidayByRow = new WeakMap();
 	var selectedCell = null;
 	var selectedJd = null;
 	var viewMonth = 0;
@@ -280,6 +299,141 @@
 		showDayInfo(getCurrentLunarToday(), today.getDate(), today.getMonth() + 1, today.getFullYear());
 	}
 
+	function collectUpcomingLunarHolidays(monthCount) {
+		var today = getToday();
+		var todayJd = getCurrentLunarToday().jd;
+		var items = [];
+
+		for (var k = 0; k < monthCount; k++) {
+			var offset = today.getMonth() + k;
+			var mm = (offset % 12) + 1;
+			var yy = today.getFullYear() + Math.floor(offset / 12);
+			if (yy > MAX_YEAR) {
+				break;
+			}
+			var days = getMonth(mm, yy);
+			for (var i = 0; i < days.length; i++) {
+				var lunar = days[i];
+				if (lunar.jd < todayJd || lunar.leap === 1) {
+					continue;
+				}
+				var key = lunar.day + "/" + lunar.month;
+				var name = LUNAR_HOLIDAYS[key];
+				if (!name || !UPCOMING_LUNAR_HOLIDAYS[key]) {
+					continue;
+				}
+
+				var last = items[items.length - 1];
+				if (TET_CONTINUATION[key]) {
+					if (last && last.endJd === lunar.jd - 1 && last.name === LUNAR_HOLIDAYS["1/1"]) {
+						last.endJd = lunar.jd;
+						last.endDay = i + 1;
+						last.endMonth = mm;
+						last.endYear = yy;
+						last.endLunarDay = lunar.day;
+						continue;
+					}
+					// Mùng 1 đã qua: mùng 2/3 phải mang nhãn Tết, không phải nhãn "(mùng 2)"
+					key = "1/1";
+					name = LUNAR_HOLIDAYS[key];
+				}
+
+				items.push({
+					jd: lunar.jd,
+					endJd: lunar.jd,
+					lunar: lunar,
+					lunarDay: lunar.day,
+					lunarMonth: lunar.month,
+					endLunarDay: lunar.day,
+					sday: i + 1,
+					smonth: mm,
+					syear: yy,
+					endDay: i + 1,
+					endMonth: mm,
+					endYear: yy,
+					name: name,
+					isMajor: UPCOMING_LUNAR_HOLIDAYS[key] === "bold"
+				});
+			}
+		}
+		return items;
+	}
+
+	function formatHolidaySolar(item) {
+		if (item.endJd === item.jd) {
+			return item.sday + "/" + item.smonth + "/" + item.syear;
+		}
+		if (item.smonth === item.endMonth && item.syear === item.endYear) {
+			return item.sday + "–" + item.endDay + "/" + item.smonth + "/" + item.syear;
+		}
+		return item.sday + "/" + item.smonth + "–" + item.endDay + "/" + item.endMonth + "/" + item.endYear;
+	}
+
+	function formatHolidayLunar(item) {
+		var day = item.endLunarDay === item.lunarDay
+			? item.lunarDay
+			: item.lunarDay + "–" + item.endLunarDay;
+		return day + "/" + item.lunarMonth + " ÂL";
+	}
+
+	function formatCountdown(days) {
+		if (days <= 0) {
+			return "hôm nay";
+		}
+		if (days === 1) {
+			return "mai";
+		}
+		return "còn " + days + " ngày";
+	}
+
+	function createHolidayRow(item, isNext) {
+		var row = createEl("li", "le-dong");
+		row.dataset.action = "holiday-jump";
+		row.title = "Xem ngày " + formatHolidaySolar(item);
+		holidayByRow.set(row, item);
+		row.append(
+			createEl("span", "le-duong", formatHolidaySolar(item)),
+			createEl("span", "le-am", formatHolidayLunar(item)),
+			createEl("span", item.isMajor ? "le-ten le-chinh" : "le-ten", item.name)
+		);
+		if (isNext) {
+			row.append(createEl("span", "le-con", formatCountdown(item.jd - getCurrentLunarToday().jd)));
+		}
+		return row;
+	}
+
+	function createHolidayList() {
+		var items = collectUpcomingLunarHolidays(UPCOMING_MONTHS);
+		if (items.length === 0) {
+			return null;
+		}
+		var list = createEl("ul", "le-ds");
+		for (var i = 0; i < items.length; i++) {
+			list.append(createHolidayRow(items[i], i === 0));
+		}
+
+		var box = document.createDocumentFragment();
+		box.append(createEl("div", "le-dau", "Ngày lễ âm lịch sắp tới"), list);
+		return box;
+	}
+
+	function showUpcomingHolidays() {
+		var box = createHolidayList();
+		if (box) {
+			document.getElementById("holidays").replaceChildren(box);
+		}
+	}
+
+	function jumpToHoliday(row) {
+		var item = holidayByRow.get(row);
+		if (!item) {
+			return;
+		}
+		// showDayInfo đặt selectedJd trước, để showMonth chọn đúng ô
+		showDayInfo(item.lunar, item.sday, item.smonth, item.syear);
+		showMonth(item.smonth, item.syear);
+	}
+
 	function showMonth(mm, yy) {
 		var table = createMonthTable(mm, yy);
 		if (!table) {
@@ -333,6 +487,9 @@
 				case "day-info":
 					showDayInfoForCell(node);
 					return;
+				case "holiday-jump":
+					jumpToHoliday(node);
+					return;
 				case "prev-month":
 					shiftMonth(-1);
 					return;
@@ -361,7 +518,9 @@
 
 	window.onload = function() {
 		document.getElementById("content").addEventListener("click", handleCalendarClick);
+		document.getElementById("holidays").addEventListener("click", handleCalendarClick);
 		showTodayInfo();
+		showUpcomingHolidays();
 		showMonth(getCurrentMonth(), getCurrentYear());
 	};
 

@@ -475,3 +475,149 @@ test("các hành động còn lại", async (t) => {
 		assert.deepEqual(env.alerts, []);
 	});
 });
+
+test("box ngày lễ âm lịch sắp tới", async (t) => {
+	await t.test("liệt kê 12 tháng tới, không dừng ở cuối năm dương", () => {
+		const env = createPopupEnv();
+		assert.equal(env.getHolidayTitle(), "Ngày lễ âm lịch sắp tới");
+		assert.deepEqual(
+			env.getHolidays().map((h) => h.solar + " " + h.name),
+			[
+				"25/9/2026 Tết Trung Thu",
+				"30/1/2027 Ông Táo về trời",
+				"6–8/2/2027 Tết Nguyên Đán",
+				"20/2/2027 Tết Nguyên Tiêu",
+				"16/4/2027 Giỗ Tổ Hùng Vương",
+				"9/6/2027 Tết Đoan Ngọ",
+				"16/8/2027 Lễ Vu Lan báo hiếu",
+			]
+		);
+	});
+
+	await t.test("mùng 1-2-3 Tết gộp thành một dòng", () => {
+		const env = createPopupEnv();
+		const tet = env.getHolidays().filter((h) => h.name === "Tết Nguyên Đán");
+		assert.equal(tet.length, 1);
+		assert.equal(tet[0].solar, "6–8/2/2027");
+		assert.equal(tet[0].lunar, "1–3/1 ÂL");
+		assert.doesNotMatch(env.serializeHolidays(), /mùng 2|mùng 3/);
+	});
+
+	await t.test("chỉ mốc gần nhất có đếm ngược", () => {
+		const env = createPopupEnv();
+		const rows = env.getHolidays();
+		assert.equal(rows[0].countdown, "còn 24 ngày");
+		assert.deepEqual(rows.slice(1).map((h) => h.countdown), new Array(rows.length - 1).fill(null));
+	});
+
+	await t.test("lễ hôm nay vẫn còn trong danh sách và ghi hôm nay", () => {
+		const env = createPopupEnv({ today: [2026, 8, 25] });
+		const rows = env.getHolidays();
+		assert.equal(rows[0].name, "Tết Trung Thu");
+		assert.equal(rows[0].solar, "25/9/2026");
+		assert.equal(rows[0].countdown, "hôm nay");
+	});
+
+	await t.test("lễ hôm qua đã bị loại khỏi danh sách", () => {
+		const env = createPopupEnv({ today: [2026, 8, 26] });
+		assert.equal(env.getHolidays().some((h) => h.name === "Tết Trung Thu"), false);
+	});
+
+	await t.test("đứng giữa Tết thì mùng còn lại vẫn mang nhãn Tết Nguyên Đán", () => {
+		const env = createPopupEnv({ today: [2027, 1, 7] });
+		const tet = env.getHolidays().filter((h) => h.name === "Tết Nguyên Đán");
+		// Cửa sổ 12 tháng từ 7/2/2027 chạm cả Tết 2028, nên có 2 dòng Tết
+		assert.equal(tet.length, 2);
+		assert.equal(tet[0].solar, "7–8/2/2027");
+		assert.equal(tet[0].lunar, "2–3/1 ÂL");
+		assert.equal(tet[0].countdown, "hôm nay");
+		assert.equal(tet[1].solar, "26–28/1/2028");
+		assert.equal(tet[1].lunar, "1–3/1 ÂL");
+	});
+
+	await t.test("chỉ lấy lễ âm, không lẫn lễ dương", () => {
+		const env = createPopupEnv();
+		assert.doesNotMatch(env.serializeHolidays(), /Quốc khánh|Giáng sinh|Nhà giáo|Phụ nữ/);
+	});
+
+	await t.test("click một dòng thì lịch nhảy tới tháng đó và chọn đúng ngày", () => {
+		const env = createPopupEnv();
+		env.clickHoliday("Tết Nguyên Đán");
+		assert.equal(env.getMonthTitle(), "2/2027");
+		assert.equal(env.getInfoText("tin-duong"), "Thứ bảy, 6/2/2027");
+		assert.equal(env.getInfoText("tin-am"), "Ngày 1 tháng 1 ÂL");
+		assert.equal(env.getInfoText("tin-le"), "Tết Nguyên Đán");
+		assert.deepEqual(env.getSelectedCells().map((c) => c.children[0].textContent), ["6"]);
+	});
+
+	await t.test("box không lẫn vào info box của ngày", () => {
+		const env = createPopupEnv();
+		assert.doesNotMatch(env.serializeInfo(), /le-dong|le-dau/);
+		assert.doesNotMatch(env.serializeHolidays(), /tin-bang|tin-dau/);
+	});
+});
+
+test("in đậm hai lễ âm được nghỉ chính thức", async (t) => {
+	await t.test("chỉ Tết Nguyên Đán và Giỗ Tổ Hùng Vương được in đậm", () => {
+		const env = createPopupEnv();
+		assert.deepEqual(
+			env.getHolidays().filter((h) => h.major).map((h) => h.name),
+			["Tết Nguyên Đán", "Giỗ Tổ Hùng Vương"]
+		);
+	});
+
+	await t.test("các lễ âm lớn khác vẫn không đậm", () => {
+		const env = createPopupEnv();
+		const plain = env.getHolidays().filter((h) => !h.major).map((h) => h.name);
+		assert.deepEqual(plain, [
+			"Tết Trung Thu",
+			"Ông Táo về trời",
+			"Tết Nguyên Tiêu",
+			"Tết Đoan Ngọ",
+			"Lễ Vu Lan báo hiếu",
+		]);
+	});
+
+	await t.test("dòng Tết gộp từ mùng 2 vẫn giữ in đậm", () => {
+		const env = createPopupEnv({ today: [2027, 1, 7] });
+		const tet = env.getHolidays().filter((h) => h.name === "Tết Nguyên Đán");
+		assert.deepEqual(tet.map((h) => h.major), [true, true]);
+	});
+});
+
+test("box chỉ hiện đúng danh sách lễ âm đã chốt", async (t) => {
+	const ALLOWED = [
+		"Tết Nguyên Đán",
+		"Tết Nguyên Tiêu",
+		"Giỗ Tổ Hùng Vương",
+		"Tết Đoan Ngọ",
+		"Lễ Vu Lan báo hiếu",
+		"Tết Trung Thu",
+		"Ông Táo về trời",
+	];
+
+	await t.test("Tết Hàn Thực và Lễ Phật Đản không xuất hiện trong box", () => {
+		const env = createPopupEnv();
+		assert.doesNotMatch(env.serializeHolidays(), /Hàn Thực|Phật Đản/);
+		assert.equal(env.getHolidayRows().length, 7);
+	});
+
+	await t.test("không lễ nào ngoài danh sách lọt vào box, ở bất kỳ mốc nào trong năm", () => {
+		for (const today of [[2026, 8, 1], [2026, 11, 31], [2027, 1, 7], [2027, 5, 30]]) {
+			const env = createPopupEnv({ today });
+			for (const holiday of env.getHolidays()) {
+				assert.ok(ALLOWED.includes(holiday.name), holiday.name + " lọt vào box (today=" + today + ")");
+			}
+		}
+	});
+
+	await t.test("lễ bị ẩn khỏi box vẫn hiện ở info box và vẫn được tô trên lịch", () => {
+		const env = createPopupEnv();
+		for (const [mm, day, name] of [[4, 9, "Tết Hàn Thực"], [5, 20, "Lễ Phật Đản"]]) {
+			assert.equal(env.goToMonth(mm, 2027), true);
+			const cell = env.clickDay(day);
+			assert.equal(env.getInfoText("tin-le"), name);
+			assert.equal(cell.classList.contains("tet"), true);
+		}
+	});
+});

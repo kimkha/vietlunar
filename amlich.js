@@ -54,14 +54,14 @@
 			0x465aa0, 0x30ada5, 0x5695d0, 0x404ad0, 0x2aa9b3, 0x50a4d0, 0x3ad2b7, 0x5eb250, 0x48b540, 0x33d556
 	); /* Years 2100-2199 */
 
-	var CAN = new Array("Gi\341p", "\u1EA4t", "B\355nh", "\u0110inh", "M\u1EADu", "K\u1EF7", "Canh", "T\342n", "Nh\342m", "Qu\375");
-	var CHI = new Array("T\375", "S\u1EEDu", "D\u1EA7n", "M\343o", "Th\354n", "T\u1EF5", "Ng\u1ECD", "M\371i", "Th\342n", "D\u1EADu", "Tu\u1EA5t", "H\u1EE3i");
-	var TUAN = new Array("Ch\u1EE7 nh\u1EADt", "Th\u1EE9 hai", "Th\u1EE9 ba", "Th\u1EE9 t\u01B0", "Th\u1EE9 n\u0103m", "Th\u1EE9 s\341u", "Th\u1EE9 b\u1EA3y");
+	var CAN = new Array("Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý");
+	var CHI = new Array("Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi");
+	var TUAN = new Array("Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy");
 	var GIO_HD = new Array("110100101100", "001101001011", "110011010010", "101100110100", "001011001101", "010010110011");
-	var TIETKHI = new Array("Xu\u00E2n ph\u00E2n", "Thanh minh", "C\u1ED1c v\u0169", "L\u1EADp h\u1EA1", "Ti\u1EC3u m\u00E3n", "Mang ch\u1EE7ng",
-		"H\u1EA1 ch\u00ED", "Ti\u1EC3u th\u1EED", "\u0110\u1EA1i th\u1EED", "L\u1EADp thu", "X\u1EED th\u1EED", "B\u1EA1ch l\u1ED9",
-		"Thu ph\u00E2n", "H\u00E0n l\u1ED9", "S\u01B0\u01A1ng gi\u00E1ng", "L\u1EADp \u0111\u00F4ng", "Ti\u1EC3u tuy\u1EBFt", "\u0110\u1EA1i tuy\u1EBFt",
-		"\u0110\u00F4ng ch\u00ED", "Ti\u1EC3u h\u00E0n", "\u0110\u1EA1i h\u00E0n", "L\u1EADp xu\u00E2n", "V\u0169 Th\u1EE7y", "Kinh tr\u1EADp"
+	var TIETKHI = new Array("Xuân phân", "Thanh minh", "Cốc vũ", "Lập hạ", "Tiểu mãn", "Mang chủng",
+		"Hạ chí", "Tiểu thử", "Đại thử", "Lập thu", "Xử thử", "Bạch lộ",
+		"Thu phân", "Hàn lộ", "Sương giáng", "Lập đông", "Tiểu tuyết", "Đại tuyết",
+		"Đông chí", "Tiểu hàn", "Đại hàn", "Lập xuân", "Vũ Thủy", "Kinh trập"
 	);
 
 	/* Create lunar date object, stores (lunar) date, month, year, leap month indicator, and Julian date number */
@@ -227,35 +227,6 @@
 		return INT(SunLongitude(dayNumber - 0.5 - timeZone/24.0) / PI * 12);
 	}
 
-	function parseQuery(q) {
-		var ret = new Array();
-		if (q.length < 2) return ret;
-		var s = q.substring(1, q.length);
-		var arr = s.split("&");
-		var i, j;
-		for (i = 0; i < arr.length; i++) {
-			var a = arr[i].split("=");
-			for (j = 0; j < a.length; j++) {
-				ret.push(a[j]);
-			}
-		}
-		return ret;
-	}
-
-	function getSelectedMonth() {
-		if (typeof location === "undefined") return;
-		var query = location.search;
-		var arr = parseQuery(query);
-		var idx;
-		for (idx = 0; idx < arr.length; idx++) {
-			if (arr[idx] == "mm") {
-				currentMonth = parseInt(arr[idx+1]);
-			} else if (arr[idx] == "yy") {
-				currentYear = parseInt(arr[idx+1]);
-			}
-		}
-	}
-
 	function getMonth(mm, yy) {
 		var ly1, ly2, tet1, jd1, jd2, mm1, yy1, result, i;
 		if (mm < 12) {
@@ -297,8 +268,8 @@
 			return "";
 		}
 		var cc = getCanChi(lunarDate);
-		var s = "Ng\u00E0y " + cc[0] +", th\341ng "+cc[1] + ", n\u0103m " + cc[2];
-		return s;
+		var month = lunarDate.leap == 1 ? cc[1] + " (nhuận)" : cc[1];
+		return "Ngày " + cc[0] + ", tháng " + month + ", năm " + cc[2];
 	}
 
 	function getYearCanChi(year) {
@@ -316,9 +287,6 @@
 		var dayName, monthName, yearName;
 		dayName = CAN[(lunar.jd + 9) % 10] + " " + CHI[(lunar.jd+1)%12];
 		monthName = CAN[(lunar.year*12+lunar.month+3) % 10] + " " + CHI[(lunar.month+1)%12];
-		if (lunar.leap == 1) {
-			monthName += " (nhu\u1EADn)";
-		}
 		yearName = getYearCanChi(lunar.year);
 		return new Array(dayName, monthName, yearName);
 	}
@@ -328,16 +296,16 @@
 		var dayOfWeek = TUAN[(lunar.jd + 1) % 7];
 		s = dayOfWeek + " " + solarDay + "/" + solarMonth + "/" + solarYear;
 		s += " -+- ";
-		s = s + "Ng\u00E0y " + lunar.day+" th\341ng "+lunar.month;
+		s = s + "Ngày " + lunar.day+" tháng "+lunar.month;
 		if (lunar.leap == 1) {
-			s = s + " nhu\u1EADn";
+			s = s + " nhuận";
 		}
 		return s;
 	}
 
 	function getTodayString() {
 		var s = getDayString(currentLunarDate, today.getDate(), today.getMonth()+1, today.getFullYear());
-		s += " n\u0103m " + getYearCanChi(currentLunarDate.year);
+		s += " năm " + getYearCanChi(currentLunarDate.year);
 		return s;
 	}
 
@@ -394,13 +362,13 @@
 		currentYear = today.getFullYear();
 	}
 	
-	global.getSelectedMonth = getSelectedMonth;
 	global.getCurrentMonth = getCurrentMonth;
 	global.getCurrentYear = getCurrentYear;
 	global.getMonth = getMonth;
 	global.getYearCanChi = getYearCanChi;
 	global.getToday = getToday;
 	global.getDayName = getDayName;
+	global.getCanChi = getCanChi;
 	global.getCurrentLunarToday = getCurrentLunarToday;
 	global.refreshTime = init;
 	global.LunarDate = LunarDate;

@@ -5,6 +5,7 @@ const vm = require("vm");
 const path = require("path");
 
 const PROJECT_ROOT = path.join(__dirname, "..");
+const SRC_ROOT = path.join(PROJECT_ROOT, "src");
 
 class ClassList {
 	constructor(node) {
@@ -195,7 +196,7 @@ function createPopupEnv(options) {
 	});
 
 	const run = (file) => {
-		const full = path.isAbsolute(file) ? file : path.join(PROJECT_ROOT, file);
+		const full = path.isAbsolute(file) ? file : path.join(SRC_ROOT, file);
 		vm.runInContext(fs.readFileSync(full, "utf8"), context, { filename: file });
 	};
 

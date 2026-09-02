@@ -6,3 +6,6 @@ vietlunar.zip
 .codegraph
 .playwright-mcp/
 .workstream/
+
+# yarn
+node_modules/

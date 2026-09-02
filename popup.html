@@ -25,7 +25,7 @@
       }
 
       body {
-        width: 800px;
+        width: 592px;
         overflow-x: hidden;
         margin: 0;
         padding: 6px;
@@ -90,14 +90,37 @@
       }
 
       .tenthang {
-        text-align: center;
-        font-size: 17px;
+        font-size: 15px;
         font-weight: 700;
-        letter-spacing: 0.2px;
         color: var(--plum);
+      }
+
+      .tenthang-thang,
+      .tenthang-nam {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
         cursor: pointer;
       }
 
+      .tenthang-thang {
+        left: 0;
+        width: 58%;
+        justify-content: flex-end;
+        padding-right: 4px;
+      }
+
+      .tenthang-nam {
+        left: 58%;
+        width: 42%;
+        justify-content: flex-start;
+        padding-left: 4px;
+      }
+
+      .thang .tenthang,
       .thang .navi-l,
       .thang .navi-r {
         position: relative;
@@ -138,21 +161,20 @@
         left: 50%;
       }
 
-      .navi-l button {
-        color: var(--sun);
-      }
-
+      .navi-l button,
       .navi-r button {
         color: var(--plum);
       }
 
-      .tenthang:hover,
+      .tenthang-thang:hover,
+      .tenthang-nam:hover,
       .navi-l button:hover:not(:disabled),
       .navi-r button:hover:not(:disabled) {
         background-image: linear-gradient(180deg, var(--mint-deep) 0%, var(--mint-press) 100%);
       }
 
-      .tenthang:active,
+      .tenthang-thang:active,
+      .tenthang-nam:active,
       .navi-l button:active:not(:disabled),
       .navi-r button:active:not(:disabled) {
         background-image: linear-gradient(180deg, var(--mint-press) 0%, var(--mint-deep) 100%);
@@ -452,16 +474,19 @@
       }
 
       .le-ds {
+        display: grid;
+        grid-template-columns: max-content max-content 1fr auto;
         margin: 0;
         padding: 0;
         list-style: none;
       }
 
       .le-dong {
+        grid-column: 1 / -1;
         display: grid;
-        grid-template-columns: 88px 54px 1fr auto;
+        grid-template-columns: subgrid;
         align-items: center;
-        gap: 6px;
+        column-gap: 4px;
         padding: 5px 8px;
         border-bottom: 1px solid var(--hairline);
         font-size: 12px;
@@ -498,6 +523,10 @@
         color: var(--plum);
       }
 
+      .le-ten:last-child {
+        grid-column: 3 / -1;
+      }
+
       .le-ten.le-chinh {
         font-weight: 700;
       }
@@ -513,6 +542,113 @@
         white-space: nowrap;
         color: var(--plum);
       }
+
+      #picker {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(51, 0, 51, 0.42);
+      }
+
+      #picker:empty {
+        display: none;
+      }
+
+      .hop-chon {
+        width: 320px;
+        padding: 10px;
+        border-radius: 14px;
+        background: var(--cream);
+        box-shadow: 0 12px 32px rgba(51, 0, 51, 0.35);
+      }
+
+      .hop-dau {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .hop-ten {
+        flex: 1 1 auto;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        color: var(--plum);
+      }
+
+      .hop-dau button,
+      .hop-dem {
+        flex: 0 0 26px;
+        width: 26px;
+        height: 26px;
+      }
+
+      .hop-dau button {
+        padding: 0;
+        border: 0;
+        border-radius: 7px;
+        background: var(--mint);
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--plum);
+        cursor: pointer;
+      }
+
+      .hop-dau button:hover:not(:disabled) {
+        background: var(--mint-deep);
+      }
+
+      .hop-dau button:disabled {
+        opacity: 0.35;
+        cursor: default;
+      }
+
+      .hop-luoi {
+        display: grid;
+        gap: 6px;
+      }
+
+      .luoi-thang {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .luoi-nam {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .hop-o {
+        padding: 10px 0;
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        background: var(--cream);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--plum);
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+      }
+
+      .hop-o:hover:not(:disabled) {
+        background: #f2f7ee;
+      }
+
+      .hop-o.chon {
+        background: var(--mint);
+        box-shadow: inset 0 0 0 2px rgba(51, 0, 51, 0.55);
+      }
+
+      .hop-o:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
     </style>
     <script src="amlich.js"></script>
   </head>
@@ -526,6 +662,7 @@
         <div id="dayinfo"></div>
       </div>
     </div>
+    <div id="picker"></div>
     <script src="popup.js"></script>
   </body>
 </html>

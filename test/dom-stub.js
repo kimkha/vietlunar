@@ -204,17 +204,20 @@ function createPopupEnv(options) {
 	const content = new StubNode("div");
 	const dayinfo = new StubNode("div");
 	const holidays = new StubNode("div");
+	const picker = new StubNode("div");
 	const alerts = [];
 	const openedWindows = [];
+	const documentListeners = {};
 	let printCalls = 0;
 
-	const elementsById = { content: content, dayinfo: dayinfo, holidays: holidays };
+	const elementsById = { content: content, dayinfo: dayinfo, holidays: holidays, picker: picker };
 
 	context.document = {
 		createElement: (tag) => new StubNode(tag),
 		createDocumentFragment: () => new StubNode(""),
 		getElementById: (id) => elementsById[id] || null,
 		querySelector: (selector) => content.querySelector(selector),
+		addEventListener: (type, handler) => { documentListeners[type] = handler; },
 	};
 	context.window = {
 		document: context.document,
@@ -230,16 +233,23 @@ function createPopupEnv(options) {
 	const getDayCells = () => content.querySelectorAll('td[data-action="day-info"]');
 	const getButton = (action) => content.querySelectorAll("button").find((b) => b.dataset.action === action);
 	const getHolidayRows = () => holidays.querySelectorAll('li[data-action="holiday-jump"]');
+	const getMonthLabel = () => content.querySelector(".tenthang-thang").textContent;
+	const getYearLabel = () => content.querySelector(".tenthang-nam").textContent;
+	const getPickerCells = () => picker.querySelectorAll(".hop-o");
+	const getPickerButton = (action) => picker.querySelectorAll("button").find((b) => b.dataset.action === action);
 
 	return {
 		content,
 		dayinfo,
 		holidays,
+		picker,
 		alerts,
 		openedWindows,
 		getPrintCalls: () => printCalls,
 
-		getMonthTitle: () => content.querySelector(".tenthang").textContent,
+		getMonthLabel,
+		getYearLabel,
+		getMonthTitle: () => `${getMonthLabel()} ${getYearLabel()}`,
 		getDayCells,
 		getButtons: () => content.querySelectorAll("button"),
 		getButton,
@@ -260,13 +270,17 @@ function createPopupEnv(options) {
 		},
 		getHolidayRows,
 		getHolidays: () =>
-			getHolidayRows().map((row) => ({
-				solar: row.querySelector(".le-duong").textContent,
-				lunar: row.querySelector(".le-am").textContent,
-				name: row.querySelector(".le-ten").textContent,
-				major: row.querySelector(".le-ten").classList.contains("le-chinh"),
-				countdown: row.querySelector(".le-con") ? row.querySelector(".le-con").textContent : null,
-			})),
+			getHolidayRows().map((row) => {
+				const [dow, solar] = row.querySelector(".le-duong").textContent.split(" ");
+				return {
+					dow,
+					solar,
+					lunar: row.querySelector(".le-am").textContent,
+					name: row.querySelector(".le-ten").textContent,
+					major: row.querySelector(".le-ten").classList.contains("le-chinh"),
+					countdown: row.querySelector(".le-con") ? row.querySelector(".le-con").textContent : null,
+				};
+			}),
 		clickHoliday: (name) => {
 			const row = getHolidayRows().find((r) => r.querySelector(".le-ten").textContent === name);
 			if (!row) {
@@ -288,6 +302,55 @@ function createPopupEnv(options) {
 			return true;
 		},
 		clickNode: (node) => content.dispatch("click", node),
+		openMonthPicker: () => content.dispatch("click", content.querySelector(".tenthang-thang")),
+		openYearPicker: () => content.dispatch("click", content.querySelector(".tenthang-nam")),
+		isPickerOpen: () => picker.children.length > 0,
+		getPickerTitle: () => {
+			const node = picker.querySelector(".hop-ten");
+			return node ? node.textContent : null;
+		},
+		getPickerGridClass: () => {
+			const grid = picker.querySelector(".hop-luoi");
+			return grid ? grid.className : null;
+		},
+		getPickerCells: () =>
+			getPickerCells().map((cell) => ({
+				label: cell.textContent,
+				disabled: cell.disabled,
+				current: cell.classList.contains("chon"),
+			})),
+		getPickerButton,
+		clickPickerAction: (action) => {
+			const button = getPickerButton(action);
+			if (!button) {
+				throw new Error("no picker button for action " + action);
+			}
+			if (button.disabled) {
+				return false;
+			}
+			picker.dispatch("click", button);
+			return true;
+		},
+		clickPickerCell: (label) => {
+			const cell = getPickerCells().find((c) => c.textContent === String(label));
+			if (!cell) {
+				throw new Error("no picker cell for " + label);
+			}
+			if (cell.disabled) {
+				return false;
+			}
+			picker.dispatch("click", cell);
+			return true;
+		},
+		clickPickerNode: (node) => picker.dispatch("click", node),
+		clickPickerBackdrop: () => picker.dispatch("click", picker),
+		pressKey: (key) => {
+			const handler = documentListeners.keydown;
+			if (!handler) {
+				throw new Error("stub: no document keydown listener");
+			}
+			handler({ key: key });
+		},
 		clickDay: (solarDay) => {
 			const cell = getDayCells().find((c) => c.children[0].textContent === String(solarDay));
 			if (!cell) {
@@ -298,7 +361,8 @@ function createPopupEnv(options) {
 		},
 		goToMonth: (mm, yy) => {
 			for (let guard = 0; guard < 6000; guard++) {
-				const [currentMonth, currentYear] = content.querySelector(".tenthang").textContent.split("/").map(Number);
+				const currentMonth = Number(getMonthLabel().replace("Tháng ", ""));
+				const currentYear = Number(getYearLabel());
 				if (currentMonth === mm && currentYear === yy) {
 					return true;
 				}
@@ -316,6 +380,7 @@ function createPopupEnv(options) {
 		serializeContent: () => serialize(content),
 		serializeInfo: () => serialize(dayinfo),
 		serializeHolidays: () => serialize(holidays),
+		serializePicker: () => serialize(picker),
 	};
 }
 

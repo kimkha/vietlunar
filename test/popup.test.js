@@ -7,7 +7,7 @@ const { createPopupEnv } = require("./dom-stub.js");
 test("mở popup lần đầu", async (t) => {
 	await t.test("hiện lịch của tháng hôm nay", () => {
 		const env = createPopupEnv();
-		assert.equal(env.getMonthTitle(), "9/2026");
+		assert.equal(env.getMonthTitle(), "Tháng 9 2026");
 		assert.equal(env.getDayCells().length, 30);
 	});
 
@@ -50,7 +50,7 @@ test("mở popup lần đầu", async (t) => {
 
 	await t.test("ngày hôm nay đổi thì lịch và info box đổi theo", () => {
 		const env = createPopupEnv({ today: [2027, 1, 6] });
-		assert.equal(env.getMonthTitle(), "2/2027");
+		assert.equal(env.getMonthTitle(), "Tháng 2 2027");
 		assert.equal(env.getInfoText("tin-duong"), "Thứ bảy, 6/2/2027");
 		assert.equal(env.getInfoText("tin-am"), "Ngày 1 tháng 1 ÂL");
 	});
@@ -102,7 +102,7 @@ test("dựng DOM bằng API chuẩn, không dùng chuỗi HTML", async (t) => {
 test("điều hướng tháng và năm", async (t) => {
 	await t.test("bấm next-month đi tới và vượt qua mốc cuối năm", () => {
 		const env = createPopupEnv();
-		for (const expected of ["10/2026", "11/2026", "12/2026", "1/2027"]) {
+		for (const expected of ["Tháng 10 2026", "Tháng 11 2026", "Tháng 12 2026", "Tháng 1 2027"]) {
 			env.clickAction("next-month");
 			assert.equal(env.getMonthTitle(), expected);
 		}
@@ -110,22 +110,22 @@ test("điều hướng tháng và năm", async (t) => {
 
 	await t.test("bấm prev-month lùi lại và vượt qua mốc đầu năm", () => {
 		const env = createPopupEnv();
-		for (const expected of ["8/2026", "7/2026"]) {
+		for (const expected of ["Tháng 8 2026", "Tháng 7 2026"]) {
 			env.clickAction("prev-month");
 			assert.equal(env.getMonthTitle(), expected);
 		}
 		assert.ok(env.goToMonth(1, 2026));
 		env.clickAction("prev-month");
-		assert.equal(env.getMonthTitle(), "12/2025");
+		assert.equal(env.getMonthTitle(), "Tháng 12 2025");
 	});
 
 	await t.test("bấm next-year / prev-year giữ nguyên tháng", () => {
 		const env = createPopupEnv();
 		env.clickAction("next-year");
-		assert.equal(env.getMonthTitle(), "9/2027");
+		assert.equal(env.getMonthTitle(), "Tháng 9 2027");
 		env.clickAction("prev-year");
 		env.clickAction("prev-year");
-		assert.equal(env.getMonthTitle(), "9/2025");
+		assert.equal(env.getMonthTitle(), "Tháng 9 2025");
 	});
 
 	await t.test("mọi tháng đều render đủ ngày, không thiếu không lặp", () => {
@@ -173,7 +173,7 @@ test("giới hạn dữ liệu 1800–2199 của amlich.js", async (t) => {
 		assert.ok(env.goToMonth(9, 1800));
 		assert.equal(env.getButton("prev-year").disabled, true);
 		assert.equal(env.clickAction("prev-year"), false);
-		assert.equal(env.getMonthTitle(), "9/1800");
+		assert.equal(env.getMonthTitle(), "Tháng 9 1800");
 	});
 
 	await t.test("tới 2199 thì next-year bị vô hiệu hoá", () => {
@@ -181,7 +181,7 @@ test("giới hạn dữ liệu 1800–2199 của amlich.js", async (t) => {
 		assert.ok(env.goToMonth(9, 2199));
 		assert.equal(env.getButton("next-year").disabled, true);
 		assert.equal(env.clickAction("next-year"), false);
-		assert.equal(env.getMonthTitle(), "9/2199");
+		assert.equal(env.getMonthTitle(), "Tháng 9 2199");
 	});
 
 	await t.test("prev-month chỉ bị vô hiệu hoá ở đúng tháng 1/1800", () => {
@@ -189,7 +189,7 @@ test("giới hạn dữ liệu 1800–2199 của amlich.js", async (t) => {
 		assert.ok(env.goToMonth(2, 1800));
 		assert.equal(env.getButton("prev-month").disabled, false);
 		env.clickAction("prev-month");
-		assert.equal(env.getMonthTitle(), "1/1800");
+		assert.equal(env.getMonthTitle(), "Tháng 1 1800");
 		assert.equal(env.getButton("prev-month").disabled, true);
 	});
 
@@ -198,7 +198,7 @@ test("giới hạn dữ liệu 1800–2199 của amlich.js", async (t) => {
 		assert.ok(env.goToMonth(11, 2199));
 		assert.equal(env.getButton("next-month").disabled, false);
 		env.clickAction("next-month");
-		assert.equal(env.getMonthTitle(), "12/2199");
+		assert.equal(env.getMonthTitle(), "Tháng 12 2199");
 		assert.equal(env.getButton("next-month").disabled, true);
 	});
 
@@ -251,7 +251,7 @@ test("chọn ngày", async (t) => {
 		const env = createPopupEnv();
 		env.clickDay(15);
 		env.clickAction("next-month");
-		assert.equal(env.getMonthTitle(), "10/2026");
+		assert.equal(env.getMonthTitle(), "Tháng 10 2026");
 		assert.equal(env.getInfoText("tin-duong"), "Thứ ba, 15/9/2026");
 		assert.equal(env.getSelectedCells().length, 0);
 	});
@@ -481,19 +481,254 @@ test("các hành động còn lại", async (t) => {
 		assert.match(env.alerts[0], /Âm lịch Việt Nam/);
 	});
 
-	await t.test("click tên tháng mở trang gốc của tác giả", () => {
-		const env = createPopupEnv();
-		env.clickNode(env.content.querySelector(".tenthang"));
-		assert.equal(env.openedWindows.length, 1);
-		assert.match(env.openedWindows[0], /amlich/);
-	});
-
-	await t.test("click vào chỗ trống không làm gì cả", () => {
+	await t.test("click chỗ trống không làm gì cả", () => {
 		const env = createPopupEnv();
 		const before = env.serializeContent();
 		env.clickNode(env.content.querySelector(".ngaytuan").parentNode.parentNode);
 		assert.equal(env.serializeContent(), before);
 		assert.deepEqual(env.alerts, []);
+	});
+});
+
+test("title tách thành phần tháng và phần năm", async (t) => {
+	await t.test("hiện hai nhãn riêng, không còn dạng 9/2026", () => {
+		const env = createPopupEnv();
+		assert.equal(env.getMonthLabel(), "Tháng 9");
+		assert.equal(env.getYearLabel(), "2026");
+		assert.doesNotMatch(env.content.querySelector(".tenthang").className, /chon/);
+	});
+
+	await t.test("mỗi phần là một vùng click riêng", () => {
+		const env = createPopupEnv();
+		assert.equal(env.content.querySelector(".tenthang-thang").dataset.action, "open-month-picker");
+		assert.equal(env.content.querySelector(".tenthang-nam").dataset.action, "open-year-picker");
+		assert.equal(env.content.querySelector(".tenthang").dataset.action, undefined);
+	});
+
+	await t.test("không còn mở trang ngoài hay gọi print như bản cũ", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		env.clickPickerCell("Tháng 3");
+		env.openYearPicker();
+		env.clickPickerCell(2030);
+		assert.deepEqual(env.openedWindows, []);
+		assert.equal(env.getPrintCalls(), 0);
+	});
+});
+
+test("dialog chọn tháng", async (t) => {
+	await t.test("click phần tháng mở dialog lưới 4 cột 12 tháng", () => {
+		const env = createPopupEnv();
+		assert.equal(env.isPickerOpen(), false);
+		env.openMonthPicker();
+		assert.equal(env.isPickerOpen(), true);
+		assert.equal(env.getPickerGridClass(), "hop-luoi luoi-thang");
+		assert.deepEqual(
+			env.getPickerCells().map((c) => c.label),
+			["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+				"Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"]
+		);
+	});
+
+	await t.test("tiêu đề dialog nói rõ đang chọn tháng của năm nào", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		assert.equal(env.getPickerTitle(), "Chọn tháng năm 2026");
+		env.clickPickerCell("Tháng 4");
+		env.clickAction("next-year");
+		env.openMonthPicker();
+		assert.equal(env.getPickerTitle(), "Chọn tháng năm 2027");
+	});
+
+	await t.test("tháng đang xem được tô, và chỉ một tháng", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		assert.deepEqual(env.getPickerCells().filter((c) => c.current).map((c) => c.label), ["Tháng 9"]);
+	});
+
+	await t.test("chọn tháng thì lịch nhảy tới và dialog đóng", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		assert.equal(env.clickPickerCell("Tháng 12"), true);
+		assert.equal(env.getMonthTitle(), "Tháng 12 2026");
+		assert.equal(env.isPickerOpen(), false);
+	});
+
+	await t.test("chọn tháng giữ nguyên năm đang xem", () => {
+		const env = createPopupEnv();
+		assert.ok(env.goToMonth(3, 2028));
+		env.openMonthPicker();
+		env.clickPickerCell("Tháng 11");
+		assert.equal(env.getMonthTitle(), "Tháng 11 2028");
+	});
+
+	await t.test("không tháng nào bị vô hiệu hoá", () => {
+		const env = createPopupEnv();
+		for (const [mm, yy] of [[1, 1800], [12, 2199]]) {
+			assert.ok(env.goToMonth(mm, yy));
+			env.openMonthPicker();
+			assert.deepEqual(env.getPickerCells().filter((c) => c.disabled), []);
+			env.pressKey("Escape");
+		}
+	});
+});
+
+test("dialog chọn năm", async (t) => {
+	await t.test("click phần năm mở dialog lưới 3x3 với năm đang xem ở giữa", () => {
+		const env = createPopupEnv();
+		env.openYearPicker();
+		assert.equal(env.getPickerGridClass(), "hop-luoi luoi-nam");
+		const cells = env.getPickerCells();
+		assert.deepEqual(cells.map((c) => c.label), ["2022", "2023", "2024", "2025", "2026", "2027", "2028", "2029", "2030"]);
+		assert.equal(cells[4].label, "2026");
+		assert.equal(cells[4].current, true);
+		assert.deepEqual(cells.filter((c) => c.current).map((c) => c.label), ["2026"]);
+	});
+
+	await t.test("tiêu đề dialog là khoảng năm đang hiện", () => {
+		const env = createPopupEnv();
+		env.openYearPicker();
+		assert.equal(env.getPickerTitle(), "2022–2030");
+	});
+
+	await t.test("chọn năm thì lịch nhảy tới và dialog đóng", () => {
+		const env = createPopupEnv();
+		env.openYearPicker();
+		assert.equal(env.clickPickerCell(2029), true);
+		assert.equal(env.getMonthTitle(), "Tháng 9 2029");
+		assert.equal(env.isPickerOpen(), false);
+	});
+
+	await t.test("chọn năm giữ nguyên tháng đang xem", () => {
+		const env = createPopupEnv();
+		assert.ok(env.goToMonth(2, 2026));
+		env.openYearPicker();
+		env.clickPickerCell(2024);
+		assert.equal(env.getMonthTitle(), "Tháng 2 2024");
+	});
+
+	await t.test("nút phải lùi/tiến 9 năm một trang", () => {
+		const env = createPopupEnv();
+		env.openYearPicker();
+		assert.equal(env.clickPickerAction("next-year-page"), true);
+		assert.equal(env.getPickerTitle(), "2031–2039");
+		assert.equal(env.clickPickerAction("prev-year-page"), true);
+		assert.equal(env.clickPickerAction("prev-year-page"), true);
+		assert.equal(env.getPickerTitle(), "2013–2021");
+	});
+
+	await t.test("phân trang không đổi lịch, chỉ đổi lưới năm", () => {
+		const env = createPopupEnv();
+		env.openYearPicker();
+		env.clickPickerAction("next-year-page");
+		assert.equal(env.getMonthTitle(), "Tháng 9 2026");
+		assert.equal(env.isPickerOpen(), true);
+		assert.deepEqual(env.getPickerCells().filter((c) => c.current), []);
+	});
+
+	await t.test("năm ngoài 1800–2199 bị vô hiệu hoá nhưng lưới vẫn đủ 9 ô", () => {
+		const env = createPopupEnv();
+		assert.ok(env.goToMonth(9, 1800));
+		env.openYearPicker();
+		const cells = env.getPickerCells();
+		assert.equal(cells.length, 9);
+		assert.deepEqual(cells.filter((c) => c.disabled).map((c) => c.label), ["1796", "1797", "1798", "1799"]);
+		assert.equal(env.clickPickerCell(1799), false);
+		assert.equal(env.getMonthTitle(), "Tháng 9 1800");
+	});
+
+	await t.test("hết dữ liệu thì nút phân trang bị vô hiệu hoá", () => {
+		const env = createPopupEnv();
+		assert.ok(env.goToMonth(9, 1800));
+		env.openYearPicker();
+		assert.equal(env.getPickerButton("prev-year-page").disabled, true);
+		assert.equal(env.clickPickerAction("prev-year-page"), false);
+		assert.equal(env.getPickerButton("next-year-page").disabled, false);
+		env.pressKey("Escape");
+
+		assert.ok(env.goToMonth(9, 2199));
+		env.openYearPicker();
+		assert.equal(env.getPickerButton("next-year-page").disabled, true);
+		assert.equal(env.clickPickerAction("next-year-page"), false);
+		assert.equal(env.getPickerButton("prev-year-page").disabled, false);
+	});
+
+	await t.test("mở lại dialog thì trang quay về năm đang xem", () => {
+		const env = createPopupEnv();
+		env.openYearPicker();
+		env.clickPickerAction("next-year-page");
+		env.pressKey("Escape");
+		env.openYearPicker();
+		assert.equal(env.getPickerTitle(), "2022–2030");
+	});
+});
+
+test("đóng dialog", async (t) => {
+	await t.test("nút × đóng dialog", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		assert.equal(env.clickPickerAction("close-picker"), true);
+		assert.equal(env.isPickerOpen(), false);
+	});
+
+	await t.test("click backdrop ngoài panel đóng dialog", () => {
+		const env = createPopupEnv();
+		env.openYearPicker();
+		env.clickPickerBackdrop();
+		assert.equal(env.isPickerOpen(), false);
+	});
+
+	await t.test("click trong panel nhưng ngoài ô không đóng dialog", () => {
+		const env = createPopupEnv();
+		env.openYearPicker();
+		env.clickPickerNode(env.picker.querySelector(".hop-ten"));
+		assert.equal(env.isPickerOpen(), true);
+		env.clickPickerNode(env.picker.querySelector(".hop-luoi"));
+		assert.equal(env.isPickerOpen(), true);
+	});
+
+	await t.test("Escape đóng dialog", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		env.pressKey("Escape");
+		assert.equal(env.isPickerOpen(), false);
+	});
+
+	await t.test("phím khác không đóng dialog", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		env.pressKey("Enter");
+		assert.equal(env.isPickerOpen(), true);
+	});
+
+	await t.test("click lại nhãn title khi dialog đang mở thì rơi vào backdrop và đóng dialog", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		env.clickPickerBackdrop();
+		assert.equal(env.isPickerOpen(), false);
+		env.openYearPicker();
+		assert.equal(env.getPickerGridClass(), "hop-luoi luoi-nam");
+	});
+
+	await t.test("dialog không lẫn vào lịch, info box hay box lễ", () => {
+		const env = createPopupEnv();
+		env.openMonthPicker();
+		assert.doesNotMatch(env.serializeContent(), /hop-chon|hop-o/);
+		assert.doesNotMatch(env.serializeInfo(), /hop-chon/);
+		assert.doesNotMatch(env.serializeHolidays(), /hop-chon/);
+		assert.match(env.serializePicker(), /hop-chon/);
+	});
+
+	await t.test("đổi tháng bằng dialog vẫn giữ ô ngày đang chọn", () => {
+		const env = createPopupEnv();
+		env.clickDay(15);
+		env.openMonthPicker();
+		env.clickPickerCell("Tháng 10");
+		assert.equal(env.getSelectedCells().length, 0);
+		env.openMonthPicker();
+		env.clickPickerCell("Tháng 9");
+		assert.deepEqual(env.getSelectedCells().map((c) => env.getSolarText(c)), ["15"]);
+		assert.equal(env.getInfoText("tin-duong"), "Thứ ba, 15/9/2026");
 	});
 });
 
@@ -564,7 +799,7 @@ test("box ngày lễ âm lịch sắp tới", async (t) => {
 	await t.test("click một dòng thì lịch nhảy tới tháng đó và chọn đúng ngày", () => {
 		const env = createPopupEnv();
 		env.clickHoliday("Tết Nguyên Đán");
-		assert.equal(env.getMonthTitle(), "2/2027");
+		assert.equal(env.getMonthTitle(), "Tháng 2 2027");
 		assert.equal(env.getInfoText("tin-duong"), "Thứ bảy, 6/2/2027");
 		assert.equal(env.getInfoText("tin-am"), "Ngày 1 tháng 1 ÂL");
 		assert.equal(env.getInfoText("tin-le"), "Tết Nguyên Đán");
@@ -603,6 +838,30 @@ test("in đậm hai lễ âm được nghỉ chính thức", async (t) => {
 		const env = createPopupEnv({ today: [2027, 1, 7] });
 		const tet = env.getHolidays().filter((h) => h.name === "Tết Nguyên Đán");
 		assert.deepEqual(tet.map((h) => h.major), [true, true]);
+	});
+});
+
+test("mỗi dòng lễ kèm thứ ngay trước ngày dương", async (t) => {
+	await t.test("thứ khớp với ngày dương của từng lễ", () => {
+		const env = createPopupEnv();
+		assert.deepEqual(
+			env.getHolidays().map((h) => h.dow + " " + h.solar),
+			[
+				"T6 25/9/2026",
+				"T7 30/1/2027",
+				"T7 6–8/2/2027",
+				"T7 20/2/2027",
+				"T6 16/4/2027",
+				"T4 9/6/2027",
+				"T2 16/8/2027",
+			]
+		);
+	});
+
+	await t.test("Tết gộp từ mùng 2 lấy thứ của mùng 2, không phải mùng 1", () => {
+		const env = createPopupEnv({ today: [2027, 1, 7] });
+		const tet = env.getHolidays().find((h) => h.name === "Tết Nguyên Đán");
+		assert.equal(tet.dow + " " + tet.solar, "CN 7–8/2/2027");
 	});
 });
 

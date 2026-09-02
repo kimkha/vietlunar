@@ -8,6 +8,8 @@
 	const UPCOMING_MONTHS = 12;
 	const WEEKS_PER_MONTH = 5;
 	const SLOTS_PER_MONTH = 7 * WEEKS_PER_MONTH;
+	const YEARS_PER_PAGE = 9;
+	const YEAR_PAGE_HALF = (YEARS_PER_PAGE - 1) / 2;
 
 	const LUNAR_HOLIDAYS = {
 		"1/1": "Tết Nguyên Đán",
@@ -60,6 +62,8 @@
 	let selectedJd = null;
 	let viewMonth = 0;
 	let viewYear = 0;
+	let pickerKind = null;
+	let yearPageBase = 0;
 
 	function createEl(tag, className, text) {
 		const node = document.createElement(tag);
@@ -81,6 +85,21 @@
 		return button;
 	}
 
+	function createTitleCell(mm, yy) {
+		const month = createEl("span", "tenthang-thang", `Tháng ${mm}`);
+		month.title = "Chọn tháng";
+		month.dataset.action = "open-month-picker";
+
+		const year = createEl("span", "tenthang-nam", yy);
+		year.title = "Chọn năm";
+		year.dataset.action = "open-year-picker";
+
+		const title = createEl("td", "tenthang");
+		title.colSpan = 3;
+		title.append(month, year);
+		return title;
+	}
+
 	function createNavRow(mm, yy) {
 		const row = document.createElement("tr");
 
@@ -91,10 +110,6 @@
 			createNavButton("prev-month", "<", "Tháng trước", mm === 1 && yy - 1 < MIN_YEAR)
 		);
 
-		const title = createEl("td", "tenthang", `${mm}/${yy}`);
-		title.colSpan = 3;
-		title.dataset.action = "show-month-select";
-
 		const right = createEl("td", "navi-r");
 		right.colSpan = 2;
 		right.append(
@@ -102,7 +117,7 @@
 			createNavButton("next-year", ">>", "Năm sau", yy + 1 > MAX_YEAR)
 		);
 
-		row.append(left, title, right);
+		row.append(left, createTitleCell(mm, yy), right);
 		return row;
 	}
 
@@ -177,7 +192,7 @@
 
 		const title = createEl("td", "tennam", `Năm ${getYearCanChi(yy)} ${yy}`);
 		title.colSpan = 3;
-		title.dataset.action = "show-year-select";
+		title.dataset.action = "open-year-picker";
 		const titleRow = document.createElement("tr");
 		titleRow.append(title);
 		body.append(titleRow);
@@ -214,7 +229,6 @@
 		return cell;
 	}
 
-	// Không kèm "(nhuận)" như tooltip: dòng âm lịch ngay trên đã ghi, và giữ can chi gọn 1 dòng
 	function formatCanChi(lunar) {
 		const cc = getCanChi(lunar);
 		return `Ngày ${cc[0]}, tháng ${cc[1]}, năm ${cc[2]}`;
@@ -393,7 +407,7 @@
 		row.title = `Xem ngày ${formatHolidaySolar(item)}`;
 		holidayByRow.set(row, item);
 		row.append(
-			createEl("span", "le-duong", formatHolidaySolar(item)),
+			createEl("span", "le-duong", `${DAYNAMES[(item.jd + 1) % 7]} ${formatHolidaySolar(item)}`),
 			createEl("span", "le-am", formatHolidayLunar(item)),
 			createEl("span", item.isMajor ? "le-ten le-chinh" : "le-ten", item.name)
 		);
@@ -468,58 +482,157 @@
 		showMonth(mm, yy);
 	}
 
-	function showMonthSelect() {
-		const home = "http://www.informatik.uni-leipzig.de/~duc/amlich/JavaScript/";
-		window.open(home, "win2702", "menubar=yes,scrollbars=yes,status=yes,toolbar=yes,resizable=yes,location=yes");
+	function createMonthGrid() {
+		const grid = createEl("div", "hop-luoi luoi-thang");
+		for (let mm = 1; mm <= 12; mm++) {
+			const cell = createEl("button", mm === viewMonth ? "hop-o chon" : "hop-o", `Tháng ${mm}`);
+			cell.type = "button";
+			cell.dataset.action = "pick-month";
+			cell.dataset.month = mm;
+			grid.append(cell);
+		}
+		return grid;
 	}
 
-	function showYearSelect() {
-		window.print();
+	function createYearGrid() {
+		const grid = createEl("div", "hop-luoi luoi-nam");
+		for (let i = 0; i < YEARS_PER_PAGE; i++) {
+			const yy = yearPageBase - YEAR_PAGE_HALF + i;
+			const cell = createEl("button", yy === viewYear ? "hop-o chon" : "hop-o", yy);
+			cell.type = "button";
+			cell.disabled = yy < MIN_YEAR || yy > MAX_YEAR;
+			cell.dataset.action = "pick-year";
+			cell.dataset.year = yy;
+			grid.append(cell);
+		}
+		return grid;
+	}
+
+	function createPickerHead(kind) {
+		const head = createEl("div", "hop-dau");
+		head.append(createEl("div", "hop-dem"));
+		if (kind === "year") {
+			const first = yearPageBase - YEAR_PAGE_HALF;
+			head.append(
+				createNavButton("prev-year-page", "‹", "Trang trước", yearPageBase - YEAR_PAGE_HALF - 1 < MIN_YEAR),
+				createEl("div", "hop-ten", `${first}–${first + YEARS_PER_PAGE - 1}`),
+				createNavButton("next-year-page", "›", "Trang sau", yearPageBase + YEAR_PAGE_HALF + 1 > MAX_YEAR)
+			);
+		} else {
+			head.append(createEl("div", "hop-ten", `Chọn tháng năm ${viewYear}`));
+		}
+		head.append(createNavButton("close-picker", "×", "Đóng", false));
+		return head;
+	}
+
+	function createPickerPanel(kind) {
+		const panel = createEl("div", "hop-chon");
+		panel.dataset.action = "picker-panel";
+		panel.append(createPickerHead(kind), kind === "year" ? createYearGrid() : createMonthGrid());
+		return panel;
+	}
+
+	function renderPicker() {
+		document.getElementById("picker").replaceChildren(createPickerPanel(pickerKind));
+	}
+
+	function closePicker() {
+		pickerKind = null;
+		document.getElementById("picker").replaceChildren();
+	}
+
+	function openPicker(kind) {
+		pickerKind = kind;
+		yearPageBase = viewYear;
+		renderPicker();
+	}
+
+	function shiftYearPage(delta) {
+		yearPageBase += delta * YEARS_PER_PAGE;
+		renderPicker();
 	}
 
 	function alertAbout() {
 		alert(ABOUT);
 	}
 
-	function handleCalendarClick(event) {
+	function findActionNode(event) {
 		let node = event.target;
 		while (node && node !== event.currentTarget) {
-			switch (node.dataset?.action) {
-				case "day-info":
-					showDayInfoForCell(node);
-					return;
-				case "holiday-jump":
-					jumpToHoliday(node);
-					return;
-				case "prev-month":
-					shiftMonth(-1);
-					return;
-				case "next-month":
-					shiftMonth(1);
-					return;
-				case "prev-year":
-					showMonth(viewMonth, viewYear - 1);
-					return;
-				case "next-year":
-					showMonth(viewMonth, viewYear + 1);
-					return;
-				case "show-month-select":
-					showMonthSelect();
-					return;
-				case "show-year-select":
-					showYearSelect();
-					return;
-				case "about":
-					alertAbout();
-					return;
+			if (node.dataset?.action) {
+				return node;
 			}
 			node = node.parentNode;
+		}
+		return null;
+	}
+
+	function handleCalendarClick(event) {
+		const node = findActionNode(event);
+		switch (node?.dataset.action) {
+			case "day-info":
+				showDayInfoForCell(node);
+				return;
+			case "holiday-jump":
+				jumpToHoliday(node);
+				return;
+			case "prev-month":
+				shiftMonth(-1);
+				return;
+			case "next-month":
+				shiftMonth(1);
+				return;
+			case "prev-year":
+				showMonth(viewMonth, viewYear - 1);
+				return;
+			case "next-year":
+				showMonth(viewMonth, viewYear + 1);
+				return;
+			case "open-month-picker":
+				openPicker("month");
+				return;
+			case "open-year-picker":
+				openPicker("year");
+				return;
+			case "about":
+				alertAbout();
+				return;
+		}
+	}
+
+	function handlePickerClick(event) {
+		const node = findActionNode(event);
+		switch (node?.dataset.action) {
+			case "pick-month":
+				showMonth(Number(node.dataset.month), viewYear);
+				closePicker();
+				return;
+			case "pick-year":
+				showMonth(viewMonth, Number(node.dataset.year));
+				closePicker();
+				return;
+			case "prev-year-page":
+				shiftYearPage(-1);
+				return;
+			case "next-year-page":
+				shiftYearPage(1);
+				return;
+			case "picker-panel":
+				return;
+			default:
+				closePicker();
 		}
 	}
 
 	window.onload = () => {
 		document.getElementById("content").addEventListener("click", handleCalendarClick);
 		document.getElementById("holidays").addEventListener("click", handleCalendarClick);
+		document.getElementById("picker").addEventListener("click", handlePickerClick);
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape") {
+				closePicker();
+			}
+		});
 		showTodayInfo();
 		showUpcomingHolidays();
 		showMonth(getCurrentMonth(), getCurrentYear());

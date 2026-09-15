@@ -1,2 +1,12 @@
 compiled/
 vietlunar.zip
+
+# AI tooling artifacts
+.omo/
+.codegraph
+.cortexkit/
+.playwright-mcp/
+.workstream/
+
+# yarn
+node_modules/

@@ -1,36 +1,21 @@
 #!/bin/sh
+set -e
 
-#SCRIPT=`readlink -f $0`
-#SCRIPTPATH=`dirname $SCRIPT`
-#echo $SCRIPTPATH
+TERSER=./node_modules/.bin/terser
 
-rm -rf compiled
+if [ ! -x "$TERSER" ]; then
+	echo "terser not found. Run: yarn install" >&2
+	exit 1
+fi
+
+rm -rf compiled vietlunar.zip
 mkdir compiled
-mkdir -p compiled/_locales/en/
-mkdir -p compiled/_locales/vi/
-mkdir -p compiled/icon/
 
-cp manifest.json compiled/
-cp icon16.png compiled/
-cp icon19.png compiled/
-cp icon48.png compiled/
-cp icon128.png compiled/
-cp popup.html compiled/
-cp _locales/en/messages.json compiled/_locales/en/
-cp _locales/vi/messages.json compiled/_locales/vi/
+cp -R src/. compiled/
 
-max=30
-for i in `seq 1 $max`
-do
-    cp icon/$i.png compiled/icon/
+for js in background.js popup.js amlich.js; do
+	"$TERSER" "src/$js" --compress --mangle -o "compiled/$js"
 done
 
-java -jar ./compiler.jar --js background.js --js_output_file compiled/background.js
-java -jar ./compiler.jar --js popup.js --js_output_file compiled/popup.js
-java -jar ./compiler.jar --js amlich.js --js_output_file compiled/amlich.js
-
 cd compiled
-zip -9 -q -r vietlunar.zip *
-cd ..
-mv compiled/vietlunar.zip .
-
+zip -9 -q -r ../vietlunar.zip *

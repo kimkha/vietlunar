@@ -1,0 +1,14 @@
+{
+  "name": "vietlunar",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Vietnamese lunar calendar Chrome extension",
+  "license": "GPL-3.0",
+  "scripts": {
+    "test": "node test/popup.test.js",
+    "build": "./build.sh"
+  },
+  "devDependencies": {
+    "terser": "^5.51.2"
+  }
+}

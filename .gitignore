@@ -1,5 +1,5 @@
 compiled/
-vietlunar.zip
+dist/
 
 # AI tooling artifacts
 .omo/

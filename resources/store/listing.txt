@@ -1,12 +1,12 @@
 Chrome Web Store — VietLunar 0.4.0
 Item: https://chromewebstore.google.com/detail/vietlunar-lunar-calendar/blklnljefnfkonpnmknbbglbbhbhjieg
 Dashboard: https://chrome.google.com/webstore/devconsole/
-Package: /Users/kha/_projects/vietlunar/vietlunar.zip  (143 KB)
+Package: dist/vietlunar-0.4.0.zip  (147 KB) — from `yarn build`, or the GitHub release asset
 
 ================================================================================
 PACKAGE
 ================================================================================
-Upload vietlunar.zip as a new package for the existing item
+Upload dist/vietlunar-<version>.zip as a new package for the existing item
 (ID: blklnljefnfkonpnmknbbglbbhbhjieg). Version 0.4.0, Manifest V3.
 
 If the old listing is unpublished or you lost access, create a new item
@@ -98,7 +98,7 @@ or the raw file store/privacy.html in this repo.
 CHECKLIST
 ================================================================================
 [ ] chrome://extensions → Load unpacked → compiled/ or the repo folder, smoke-test
-[ ] Developer Dashboard → select VietLunar → Package → Upload vietlunar.zip
+[ ] Developer Dashboard → select VietLunar → Package → Upload dist/vietlunar-<version>.zip
 [ ] Update listing text (EN + VI) and screenshots
 [ ] Privacy practices: no user data collected
 [ ] Submit for review

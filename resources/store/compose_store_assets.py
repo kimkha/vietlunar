@@ -1,180 +1,181 @@
 #!/usr/bin/env python3
-"""Compose Chrome Web Store images from popup screenshots (24-bit PNG, no alpha)."""
+"""Compose Chrome Web Store images from popup captures.
+
+The two popup-*.png files next to this script are the only inputs. Both are element
+screenshots taken from a browser against `python3 -m http.server 8888` in the repo root,
+pointed at http://127.0.0.1:8888/src/popup.html:
+
+    popup-month.png  selector .khung, with #holidays set to display:none
+    popup-tet.png    selector .cot-lich, after clicking the Tet row in #holidays
+
+Run: python3 resources/store/compose_store_assets.py
+"""
 
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-ROOT = Path(__file__).resolve().parent
-REPO = ROOT.parent
+STORE = Path(__file__).resolve().parent
+RESOURCES = STORE.parent
 
+CANVAS = (1280, 800)
+MARGIN = 80
 
-def crop_content(path, pad=8):
-    img = Image.open(path).convert("RGB")
-    w, h = img.size
-    px = img.load()
-    bg = px[0, 0]
-    def is_bg(c):
-        return all(abs(c[i] - bg[i]) < 12 for i in range(3))
+PLUM = (46, 10, 42)
+BERRY = (116, 20, 34)
+NAVY = (24, 42, 62)
+CREAM = (255, 248, 235)
+APRICOT = (255, 206, 150)
 
-    left, top, right, bottom = w, h, 0, 0
-    for y in range(h):
-        for x in range(w):
-            if not is_bg(px[x, y]):
-                left = min(left, x)
-                top = min(top, y)
-                right = max(right, x)
-                bottom = max(bottom, y)
-    left = max(0, left - pad)
-    top = max(0, top - pad)
-    right = min(w - 1, right + pad)
-    bottom = min(h - 1, bottom + pad)
-    return img.crop((left, top, right + 1, bottom + 1))
+SANS = ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"]
+SANS_BOLD = ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+             "/System/Library/Fonts/Supplemental/Arial Bold.ttf"]
 
 
 def font(size, bold=False):
-    candidates = [
-        "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
-        "/Library/Fonts/Arial Unicode.ttf",
-        "/System/Library/Fonts/Supplemental/Arial Bold.ttf" if bold else "/System/Library/Fonts/Supplemental/Arial.ttf",
-    ]
-    for path in candidates:
+    for path in SANS_BOLD if bold else SANS:
         if Path(path).exists():
             return ImageFont.truetype(path, size)
-    return ImageFont.load_default()
+    raise SystemExit("no Vietnamese-capable TTF found; install fonts-dejavu")
 
 
-def rounded_card(img, radius=18, shadow=18):
+def gradient(size, top, bottom):
+    w, h = size
+    img = Image.new("RGB", size)
+    draw = ImageDraw.Draw(img)
+    for y in range(h):
+        t = y / max(h - 1, 1)
+        r, g, b = (round(top[i] + (bottom[i] - top[i]) * t) for i in range(3))
+        draw.line([(0, y), (w, y)], fill=(r, g, b))
+    return img
+
+
+def rounded_card(img, radius=16, spread=22):
     card = img.convert("RGB")
     w, h = card.size
     mask = Image.new("L", (w, h), 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, h - 1), radius=radius, fill=255)
-    rounded = Image.new("RGB", (w, h), (255, 255, 255))
-    rounded.paste(card, (0, 0), mask)
 
-    canvas_w, canvas_h = w + shadow * 2, h + shadow * 2
-    shadow_img = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
-    sdraw = ImageDraw.Draw(shadow_img)
-    sdraw.rounded_rectangle(
-        (shadow, shadow + 4, shadow + w, shadow + h + 4),
-        radius=radius,
-        fill=(0, 0, 0, 70),
-    )
-    shadow_img = shadow_img.filter(ImageFilter.GaussianBlur(10))
-    out = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
-    out.alpha_composite(shadow_img)
-    out.paste(rounded, (shadow, shadow), mask)
+    out = Image.new("RGBA", (w + spread * 2, h + spread * 2), (0, 0, 0, 0))
+    shadow = Image.new("RGBA", out.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        (spread, spread + 6, spread + w, spread + h + 6), radius=radius, fill=(0, 0, 0, 90))
+    out.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(12)))
+    out.paste(card, (spread, spread), mask)
     return out
 
 
-def gradient(size, c1, c2):
-    w, h = size
-    img = Image.new("RGB", size, c1)
-    draw = ImageDraw.Draw(img)
-    for y in range(h):
-        t = y / max(h - 1, 1)
-        color = tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3))
-        draw.line([(0, y), (w, y)], fill=color)
-    return img
+def fit(img, max_w, max_h):
+    img = img.convert("RGBA")
+    scale = min(max_w / img.width, max_h / img.height)
+    return img.resize((round(img.width * scale), round(img.height * scale)),
+                      Image.Resampling.LANCZOS)
 
 
-def fit_card(card, max_w, max_h):
-    card = card.convert("RGBA")
-    cw, ch = card.size
-    scale = min(max_w / cw, max_h / ch)
-    nw, nh = int(cw * scale), int(ch * scale)
-    return card.resize((nw, nh), Image.Resampling.LANCZOS)
+def largest_fitting(draw, lines, width, sizes, bold=False):
+    for size in sizes:
+        face = font(size, bold)
+        if all(draw.textlength(line, font=face) <= width for line in lines):
+            return face
+    return font(sizes[-1], bold)
 
 
-def save_rgb(img, path):
+def save_rgb(img, name):
+    path = STORE / name
+    # Chrome Web Store rejects screenshots carrying an alpha channel.
     img.convert("RGB").save(path, "PNG")
-    print("wrote", path, img.size)
+    print("wrote", path.name, img.size)
 
 
-def make_screenshot(path, title, subtitle, popup, extra=None):
-    canvas = gradient((1280, 800), (122, 22, 36), (28, 49, 68))
+def brand_lockup(canvas, icon, x, y, mark=56, size=34):
+    mark_img = icon.convert("RGBA").resize((mark, mark), Image.Resampling.LANCZOS)
+    canvas.paste(mark_img, (x, y), mark_img)
+    ImageDraw.Draw(canvas).text((x + mark + 18, y + mark // 2), "VietLunar",
+                                font=font(size, bold=True), fill=CREAM, anchor="lm")
+
+
+def make_screenshot(name, headline, bullets, popup, icon, top, bottom):
+    canvas = gradient(CANVAS, top, bottom)
     draw = ImageDraw.Draw(canvas)
-    draw.text((72, 56), title, font=font(46, bold=True), fill=(255, 248, 235))
-    draw.text((72, 122), subtitle, font=font(24), fill=(255, 214, 170))
 
-    card = rounded_card(popup)
-    placed = fit_card(card, 760, 560)
-    canvas.paste(placed, (72, 190), placed)
+    card = fit(rounded_card(popup), 700, CANVAS[1] - 2 * MARGIN + 44)
+    card_x = CANVAS[0] - MARGIN - card.width + 22
+    canvas.paste(card, (card_x, (CANVAS[1] - card.height) // 2), card)
 
-    if extra:
-        extra_card = fit_card(rounded_card(extra, radius=22), 320, 320)
-        canvas.paste(extra_card, (900, 240), extra_card)
+    column = card_x - MARGIN - 48
+    brand_lockup(canvas, icon, MARGIN, 76)
 
-    save_rgb(canvas, path)
+    face = largest_fitting(draw, headline, column, [46, 42, 38, 34, 30], bold=True)
+    body = largest_fitting(draw, bullets, column, [23, 21, 19, 17])
+    headline_step, bullet_step = face.size + 12, body.size + 20
+    block = len(headline) * headline_step + 26 + len(bullets) * bullet_step
+    y = (CANVAS[1] - block) // 2
+
+    for line in headline:
+        draw.text((MARGIN, y), line, font=face, fill=CREAM)
+        y += headline_step
+
+    y += 26
+    for line in bullets:
+        draw.text((MARGIN, y), line, font=body, fill=APRICOT)
+        y += bullet_step
+
+    save_rgb(canvas, name)
 
 
-def make_toolbar_shot(path, popup, day_icon):
-    canvas = gradient((1280, 800), (28, 49, 68), (122, 22, 36))
+def make_small_tile(name, icon):
+    canvas = gradient((440, 280), PLUM, BERRY)
+    mark = icon.convert("RGBA").resize((116, 116), Image.Resampling.LANCZOS)
+    canvas.paste(mark, (34, 82), mark)
     draw = ImageDraw.Draw(canvas)
-    draw.text((72, 56), "Ngày âm trên thanh công cụ", font=font(42, bold=True), fill=(255, 248, 235))
-    draw.text(
-        (72, 118),
-        "Icon toolbar hiện số ngày âm lịch. Click để mở lịch tháng.",
-        font=font(22),
-        fill=(255, 214, 170),
-    )
-
-    bar = Image.new("RGB", (1100, 72), (47, 49, 54))
-    bdraw = ImageDraw.Draw(bar)
-    bdraw.rounded_rectangle((0, 0, 1099, 71), radius=12, fill=(47, 49, 54))
-    icon = day_icon.resize((36, 36), Image.Resampling.LANCZOS).convert("RGB")
-    bar.paste(icon, (1040, 18))
-    bdraw.text((24, 22), "Chrome", font=font(22, bold=True), fill=(232, 234, 237))
-    canvas.paste(bar, (90, 190))
-
-    card = fit_card(rounded_card(popup), 980, 460)
-    canvas.paste(card, (150, 290), card)
-    save_rgb(canvas, path)
+    draw.text((172, 118), "VietLunar", font=font(38, bold=True), fill=CREAM, anchor="lm")
+    draw.text((172, 162), "Âm lịch Việt Nam", font=font(21), fill=APRICOT, anchor="lm")
+    save_rgb(canvas, name)
 
 
-def make_small_tile(path, icon):
-    canvas = gradient((440, 280), (122, 22, 36), (28, 49, 68))
+def make_marquee(name, popup, icon):
+    canvas = gradient((1400, 560), NAVY, BERRY)
     draw = ImageDraw.Draw(canvas)
-    mark = icon.convert("RGBA").resize((120, 120), Image.Resampling.LANCZOS)
-    canvas.paste(mark, (28, 80), mark)
-    draw.text((168, 88), "VietLunar", font=font(36, bold=True), fill=(255, 248, 235))
-    draw.text((168, 142), "Âm lịch Việt Nam", font=font(20), fill=(255, 214, 170))
-    save_rgb(canvas, path)
 
+    card = fit(rounded_card(popup), 700, 440)
+    card_x = 1400 - 72 - card.width + 22
+    canvas.paste(card, (card_x, (560 - card.height) // 2), card)
 
-def make_marquee(path, popup, icon):
-    canvas = gradient((1400, 560), (28, 49, 68), (122, 22, 36))
-    draw = ImageDraw.Draw(canvas)
-    mark = icon.convert("RGBA").resize((96, 96), Image.Resampling.LANCZOS)
-    canvas.paste(mark, (64, 64), mark)
-    draw.text((180, 72), "VietLunar", font=font(52, bold=True), fill=(255, 248, 235))
-    draw.text((180, 140), "Lịch âm — dương trên Chrome", font=font(26), fill=(255, 214, 170))
-    card = fit_card(rounded_card(popup), 720, 360)
-    canvas.paste(card, (60, 160), card)
-    save_rgb(canvas, path)
+    mark = 84
+    tagline = "Lịch âm và dương trên thanh công cụ Chrome"
+    face = largest_fitting(draw, [tagline], card_x - 72 - 48, [28, 26, 24, 22])
+    block = mark + 18 + face.size
+    y = (560 - block) // 2
+    brand_lockup(canvas, icon, 72, y, mark=mark, size=46)
+    draw.text((72, y + mark + 18), tagline, font=face, fill=APRICOT)
+
+    save_rgb(canvas, name)
 
 
 def main():
-    sept = crop_content(ROOT / "popup-2026-09.png")
-    tet = crop_content(ROOT / "popup-tet-2026.png")
-    icon = Image.open(REPO / "icon.png")
-    day = Image.open(REPO / "icon" / "20.png")
+    month = Image.open(STORE / "popup-month.png")
+    tet = Image.open(STORE / "popup-tet.png")
+    icon = Image.open(RESOURCES / "icon.png")
 
     make_screenshot(
-        ROOT / "screenshot-1280x800-month.png",
-        "Lịch tháng âm & dương",
-        "Xem ngày dương và ngày âm trong cùng một bảng.",
-        sept,
+        "screenshot-1280x800-month.png",
+        ["Ngày dương và ngày âm", "trong cùng một bảng"],
+        ["Mỗi ô có cả ngày dương lẫn ngày âm",
+         "Chọn một ngày để xem can chi và tiết khí",
+         "Giờ hoàng đạo cho từng ngày"],
+        month, icon, PLUM, BERRY,
     )
     make_screenshot(
-        ROOT / "screenshot-1280x800-tet.png",
-        "Tết và ngày đặc biệt",
-        "Ngày 1/1 âm lịch được đánh dấu trên lịch tháng.",
-        tet,
+        "screenshot-1280x800-tet.png",
+        ["Ngày lễ âm lịch sắp tới,", "kèm đếm ngược"],
+        ["Tết và ngày lễ được tô màu trên lịch",
+         "Bấm một dòng để nhảy tới tháng đó",
+         "Chạy offline, không theo dõi, không quảng cáo"],
+        tet, icon, NAVY, BERRY,
     )
-    make_toolbar_shot(ROOT / "screenshot-1280x800-toolbar.png", sept, day)
-    make_small_tile(ROOT / "small-tile-440x280.png", icon)
-    make_marquee(ROOT / "marquee-1400x560.png", sept, icon)
+    make_small_tile("small-tile-440x280.png", icon)
+    make_marquee("marquee-1400x560.png", month, icon)
 
 
 if __name__ == "__main__":

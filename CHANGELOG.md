@@ -1,6 +1,6 @@
 # Changelog
 
-## [Next]
+## [1.0.0] - 2026-09-18
 
 ### Added
 
@@ -13,6 +13,7 @@
 ### Development
 
 - Thay Closure Compiler bằng terser, tách `src/`, thêm test suite và CI.
+- Ảnh Web Store dựng lại từ popup mới, còn 2 screenshot; mô tả EN/VI viết lại.
 
 ## [0.4.0] - 2026-09-01
 

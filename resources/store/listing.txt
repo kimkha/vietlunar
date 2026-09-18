@@ -1,13 +1,13 @@
-Chrome Web Store — VietLunar 0.4.0
+Chrome Web Store — VietLunar 1.0.0
 Item: https://chromewebstore.google.com/detail/vietlunar-lunar-calendar/blklnljefnfkonpnmknbbglbbhbhjieg
 Dashboard: https://chrome.google.com/webstore/devconsole/
-Package: dist/vietlunar-0.4.0.zip  (147 KB) — from `yarn build`, or the GitHub release asset
+Package: dist/vietlunar-1.0.0.zip — from `yarn build`, or the GitHub release asset
 
 ================================================================================
 PACKAGE
 ================================================================================
 Upload dist/vietlunar-<version>.zip as a new package for the existing item
-(ID: blklnljefnfkonpnmknbbglbbhbhjieg). Version 0.4.0, Manifest V3.
+(ID: blklnljefnfkonpnmknbbglbbhbhjieg). Version 1.0.0, Manifest V3.
 
 If the old listing is unpublished or you lost access, create a new item
 and upload the same zip.
@@ -19,21 +19,19 @@ Name:
 VietLunar - Lunar Calendar for Vietnam
 
 Short description (max 132 chars):
-Vietnamese lunar calendar on your toolbar, with solar and lunar dates in one monthly view.
+Vietnamese lunar calendar in one click: solar + lunar dates, Can Chi, lucky hours, and upcoming lunar holidays.
 
 Detailed description:
-VietLunar shows the Vietnamese lunar date on the Chrome toolbar and opens a monthly calendar with both solar (Dương lịch) and lunar (Âm lịch) dates.
+VietLunar puts the Vietnamese lunar date on your Chrome toolbar and opens a full month at a glance.
 
-What you get
-• Toolbar icon with today’s lunar day number
-• Monthly calendar: solar date + lunar date in each cell
-• Click a day for Can Chi, tiết khí, and giờ hoàng đạo
-• Works offline — no account, no tracking, no website access
-• English and Vietnamese UI strings
+• Every cell shows both the solar (Dương lịch) and lunar (Âm lịch) date
+• Pick any day for its Can Chi, tiết khí, and giờ hoàng đạo
+• "Ngày lễ sắp tới" lists coming lunar holidays with a countdown — click one to jump to that month
+• The toolbar icon is today's lunar day number, refreshed after midnight
+• Fully offline: no account, no tracking, no network access
+• English and Vietnamese UI
 
-This update (0.4.0) migrates the extension to Manifest V3 so it stays compatible with current Chrome.
-
-Calendar calculations are based on Hồ Ngọc Đức’s âm lịch algorithm.
+Lunar calculations use Hồ Ngọc Đức's âm lịch algorithm. Covers 1800–2199.
 
 Category: Productivity
 Language: English (default), Vietnamese
@@ -45,35 +43,37 @@ Tên:
 VietLunar - Âm Lịch Việt Nam
 
 Mô tả ngắn:
-Âm lịch Việt Nam trên thanh công cụ Chrome, xem ngày dương và ngày âm trên cùng một lịch tháng.
+Lịch âm dương Việt Nam trên Chrome: ngày dương, ngày âm, can chi, giờ hoàng đạo và ngày lễ âm lịch sắp tới.
 
 Mô tả chi tiết:
-VietLunar hiện ngày âm trên icon thanh công cụ và mở lịch tháng có cả ngày dương lẫn ngày âm.
+VietLunar hiện ngày âm ngay trên thanh công cụ Chrome và mở ra cả tháng trong một lần bấm.
 
-Tính năng
-• Icon toolbar là số ngày âm hôm nay
-• Lịch tháng: ngày dương + ngày âm trong mỗi ô
-• Bấm một ngày để xem Can Chi, tiết khí, giờ hoàng đạo
-• Dùng offline — không tài khoản, không theo dõi, không truy cập website
+• Mỗi ô có cả ngày dương và ngày âm
+• Chọn một ngày để xem Can Chi, tiết khí, giờ hoàng đạo
+• Box "Ngày lễ sắp tới" liệt kê ngày lễ âm lịch kèm đếm ngược — bấm để nhảy tới tháng đó
+• Icon toolbar là số ngày âm hôm nay, tự làm mới sau nửa đêm
+• Chạy offline hoàn toàn: không tài khoản, không theo dõi, không truy cập mạng
 • Giao diện tiếng Việt và tiếng Anh
 
-Bản 0.4.0 nâng lên Manifest V3 để chạy trên Chrome hiện tại.
-
-Thuật toán âm lịch dựa trên công của Hồ Ngọc Đức.
+Thuật toán âm lịch của Hồ Ngọc Đức. Hỗ trợ 1800–2199.
 
 ================================================================================
 STORE GRAPHICS (upload these)
 ================================================================================
 Required screenshots (1280x800, 24-bit PNG):
-  store/screenshot-1280x800-month.png
-  store/screenshot-1280x800-tet.png
-  store/screenshot-1280x800-toolbar.png
+  resources/store/screenshot-1280x800-month.png
+  resources/store/screenshot-1280x800-tet.png
 
 Optional promo:
-  store/small-tile-440x280.png
-  store/marquee-1400x560.png
+  resources/store/small-tile-440x280.png
+  resources/store/marquee-1400x560.png
 
 Store icon: uses icon128.png from the package (already 128x128).
+
+Regenerate all four with:
+  python3 resources/store/compose_store_assets.py
+Its inputs are resources/store/popup-month.png and popup-tet.png; refresh those first
+if the popup UI changed — the script's docstring has the exact capture recipe.
 
 ================================================================================
 PRIVACY / PERMISSIONS (dashboard)
@@ -91,15 +91,15 @@ Does not collect user data.
 No remote code. No analytics. No accounts. Works fully offline.
 
 Privacy policy URL (optional, host this file after you push):
-https://kimkha.github.io/vietlunar/store/privacy.html
-or the raw file store/privacy.html in this repo.
+https://kimkha.github.io/vietlunar/resources/store/privacy.html
+or the raw file resources/store/privacy.html in this repo.
 
 ================================================================================
 CHECKLIST
 ================================================================================
-[ ] chrome://extensions → Load unpacked → compiled/ or the repo folder, smoke-test
+[ ] chrome://extensions → Load unpacked → src/, smoke-test
 [ ] Developer Dashboard → select VietLunar → Package → Upload dist/vietlunar-<version>.zip
-[ ] Update listing text (EN + VI) and screenshots
+[ ] Update listing text (EN + VI) and both screenshots
 [ ] Privacy practices: no user data collected
 [ ] Submit for review
-[ ] After publish, existing users on 0.3.2 should auto-update to 0.4.0
+[ ] After publish, existing users on 0.4.0 should auto-update to 1.0.0

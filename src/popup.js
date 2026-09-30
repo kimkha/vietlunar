@@ -10,6 +10,8 @@
 	const SLOTS_PER_MONTH = 7 * WEEKS_PER_MONTH;
 	const YEARS_PER_PAGE = 9;
 	const YEAR_PAGE_HALF = (YEARS_PER_PAGE - 1) / 2;
+	const PERSONAL_NAME_MAX = 40;
+	const COUNTDOWN_MAX_DAYS = 99;
 
 	const LUNAR_HOLIDAYS = {
 		"1/1": "Tết Nguyên Đán",
@@ -64,6 +66,7 @@
 	let viewYear = 0;
 	let pickerKind = null;
 	let yearPageBase = 0;
+	let personalDays = [];
 
 	function createEl(tag, className, text) {
 		const node = document.createElement(tag);
@@ -401,6 +404,13 @@
 		return `còn ${days} ngày`;
 	}
 
+	function appendCountdown(row, item, isNext) {
+		const days = item.jd - getCurrentLunarToday().jd;
+		if (isNext && days <= COUNTDOWN_MAX_DAYS) {
+			row.append(createEl("span", "le-con", formatCountdown(days)));
+		}
+	}
+
 	function createHolidayRow(item, isNext) {
 		const row = createEl("li", "le-dong");
 		row.dataset.action = "holiday-jump";
@@ -411,9 +421,7 @@
 			createEl("span", "le-am", formatHolidayLunar(item)),
 			createEl("span", item.isMajor ? "le-ten le-chinh" : "le-ten", item.name)
 		);
-		if (isNext) {
-			row.append(createEl("span", "le-con", formatCountdown(item.jd - getCurrentLunarToday().jd)));
-		}
+		appendCountdown(row, item, isNext);
 		return row;
 	}
 
@@ -447,6 +455,286 @@
 		// showDayInfo đặt selectedJd trước, để showMonth chọn đúng ô
 		showDayInfo(item.lunar, item.sday, item.smonth, item.syear);
 		showMonth(item.smonth, item.syear);
+	}
+
+	function createPersonalId() {
+		return `n${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+	}
+
+	function sanitizePersonalDays(raw) {
+		if (!Array.isArray(raw)) {
+			return [];
+		}
+		const seen = new Set();
+		const entries = [];
+		for (const item of raw) {
+			if (!item || typeof item !== "object") {
+				continue;
+			}
+			const id = String(item.id || "");
+			const name = String(item.name || "").trim();
+			const lunarDay = Number(item.lunarDay);
+			const lunarMonth = Number(item.lunarMonth);
+			if (!id || seen.has(id) || !name || name.length > PERSONAL_NAME_MAX) {
+				continue;
+			}
+			if (!Number.isInteger(lunarDay) || lunarDay < 1 || lunarDay > 30) {
+				continue;
+			}
+			if (!Number.isInteger(lunarMonth) || lunarMonth < 1 || lunarMonth > 12) {
+				continue;
+			}
+			seen.add(id);
+			entries.push({ id, name, lunarDay, lunarMonth });
+		}
+		return entries;
+	}
+
+	function readLocalPersonalDays(fallback) {
+		try {
+			const raw = localStorage.getItem("vietlunar.personalDays");
+			if (raw == null) {
+				return fallback;
+			}
+			return JSON.parse(raw);
+		} catch (error) {
+			return fallback;
+		}
+	}
+
+	function getSyncStorage() {
+		if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync) {
+			return chrome.storage.sync;
+		}
+		if (typeof localStorage !== "undefined") {
+			return {
+				get(defaults, done) {
+					done({ personalDays: readLocalPersonalDays(defaults.personalDays) });
+				},
+				set(items, done) {
+					localStorage.setItem("vietlunar.personalDays", JSON.stringify(items.personalDays));
+					if (done) {
+						done();
+					}
+				}
+			};
+		}
+		return null;
+	}
+
+	function loadPersonalDays(done) {
+		const api = getSyncStorage();
+		if (!api) {
+			done([]);
+			return;
+		}
+		api.get({ personalDays: [] }, (result) => {
+			done(sanitizePersonalDays(result && result.personalDays));
+		});
+	}
+
+	function savePersonalDays(entries, done) {
+		personalDays = entries;
+		const api = getSyncStorage();
+		if (!api) {
+			if (done) {
+				done();
+			}
+			return;
+		}
+		api.set({ personalDays: entries }, done);
+	}
+
+	function collectUpcomingPersonalDays(entries, monthCount) {
+		if (entries.length === 0) {
+			return [];
+		}
+		const byDate = new Map();
+		for (const entry of entries) {
+			const key = `${entry.lunarDay}/${entry.lunarMonth}`;
+			const group = byDate.get(key);
+			if (group) {
+				group.push(entry);
+			} else {
+				byDate.set(key, [entry]);
+			}
+		}
+
+		const today = getToday();
+		const todayJd = getCurrentLunarToday().jd;
+		const items = [];
+		for (let k = 0; k < monthCount; k++) {
+			const offset = today.getMonth() + k;
+			const mm = (offset % 12) + 1;
+			const yy = today.getFullYear() + Math.floor(offset / 12);
+			if (yy > MAX_YEAR) {
+				break;
+			}
+			const days = getMonth(mm, yy);
+			for (const [i, lunar] of days.entries()) {
+				if (lunar.jd < todayJd || lunar.leap === 1) {
+					continue;
+				}
+				const key = `${lunar.day}/${lunar.month}`;
+				const matches = byDate.get(key);
+				if (!matches) {
+					continue;
+				}
+				for (const entry of matches) {
+					items.push({
+						id: entry.id,
+						jd: lunar.jd,
+						endJd: lunar.jd,
+						lunar,
+						lunarDay: lunar.day,
+						lunarMonth: lunar.month,
+						endLunarDay: lunar.day,
+						sday: i + 1,
+						smonth: mm,
+						syear: yy,
+						endDay: i + 1,
+						endMonth: mm,
+						endYear: yy,
+						name: entry.name
+					});
+				}
+				byDate.delete(key);
+			}
+		}
+		return items;
+	}
+
+	function createPersonalRow(item, isNext) {
+		const row = createEl("li", "le-dong");
+		row.dataset.action = "nho-jump";
+		row.title = `Xem ngày ${formatHolidaySolar(item)}`;
+		holidayByRow.set(row, item);
+		const remove = createEl("button", "nho-xoa", "×");
+		remove.type = "button";
+		remove.title = "Xóa";
+		remove.dataset.action = "nho-xoa";
+		remove.dataset.id = item.id;
+		const name = createEl("span", "le-ten", item.name);
+		name.title = item.name;
+		row.append(
+			createEl("span", "le-duong", `${DAYNAMES[(item.jd + 1) % 7]} ${formatHolidaySolar(item)}`),
+			createEl("span", "le-am", formatHolidayLunar(item)),
+			name
+		);
+		appendCountdown(row, item, isNext);
+		row.append(remove);
+		return row;
+	}
+
+	function createPersonalHead() {
+		const add = createEl("button", "nho-them", "Thêm ngày");
+		add.type = "button";
+		add.dataset.action = "nho-them";
+		const head = createEl("div", "le-dau nho-dau");
+		head.append(createEl("span", "nho-ten", "Ngày cần nhớ"), add);
+		return head;
+	}
+
+	function showPersonalDays() {
+		const items = collectUpcomingPersonalDays(personalDays, UPCOMING_MONTHS);
+		const list = createEl("ul", "le-ds nho-ds");
+		for (const [i, item] of items.entries()) {
+			list.append(createPersonalRow(item, i === 0));
+		}
+		document.getElementById("personal").replaceChildren(createPersonalHead(), list);
+	}
+
+	function deletePersonalDay(id) {
+		savePersonalDays(personalDays.filter((entry) => entry.id !== id));
+		showPersonalDays();
+	}
+
+	function createNhoField(labelText, field) {
+		const wrap = createEl("label", "nho-truong");
+		wrap.append(createEl("span", "nho-nhan", labelText), field);
+		return wrap;
+	}
+
+	function createNhoSelect(field, start, end, selected, prefix) {
+		const select = createEl("select", "nho-nhap");
+		select.dataset.field = field;
+		for (let n = start; n <= end; n++) {
+			const option = createEl("option", null, prefix ? `${prefix} ${n}` : String(n));
+			option.value = String(n);
+			select.append(option);
+		}
+		select.value = String(selected);
+		return select;
+	}
+
+	function createNhoPanel() {
+		const todayLunar = getCurrentLunarToday();
+		const name = createEl("input", "nho-nhap");
+		name.type = "text";
+		name.dataset.field = "name";
+		name.maxLength = PERSONAL_NAME_MAX;
+		name.placeholder = "Giỗ ông, sinh nhật…";
+
+		const day = createNhoSelect("day", 1, 30, todayLunar.day);
+		const month = createNhoSelect("month", 1, 12, todayLunar.month, "Tháng");
+		const row = createEl("div", "nho-hang");
+		row.append(createNhoField("Ngày âm", day), createNhoField("Tháng âm", month));
+
+		const cancel = createEl("button", "nho-huy", "Hủy");
+		cancel.type = "button";
+		cancel.dataset.action = "nho-huy";
+		const save = createEl("button", "nho-luu", "Lưu");
+		save.type = "button";
+		save.dataset.action = "nho-luu";
+		const actions = createEl("div", "nho-nut");
+		actions.append(cancel, save);
+
+		const head = createEl("div", "hop-dau");
+		head.append(
+			createEl("div", "hop-dem"),
+			createEl("div", "hop-ten", "Thêm ngày cần nhớ"),
+			createNavButton("close-picker", "×", "Đóng", false)
+		);
+
+		const panel = createEl("div", "hop-chon nho-hop");
+		panel.dataset.action = "nho-panel";
+		panel.append(head, createNhoField("Tên", name), row, actions);
+		return panel;
+	}
+
+	function openNhoForm() {
+		pickerKind = "nho";
+		renderPicker();
+	}
+
+	function saveNhoForm() {
+		const panel = document.getElementById("picker").querySelector(".nho-hop");
+		if (!panel) {
+			return;
+		}
+		const nameNode = panel.querySelector('[data-field="name"]');
+		const dayNode = panel.querySelector('[data-field="day"]');
+		const monthNode = panel.querySelector('[data-field="month"]');
+		const name = String((nameNode && nameNode.value) || "").trim();
+		const lunarDay = Number(dayNode && dayNode.value);
+		const lunarMonth = Number(monthNode && monthNode.value);
+		if (!name || name.length > PERSONAL_NAME_MAX) {
+			return;
+		}
+		if (!Number.isInteger(lunarDay) || lunarDay < 1 || lunarDay > 30) {
+			return;
+		}
+		if (!Number.isInteger(lunarMonth) || lunarMonth < 1 || lunarMonth > 12) {
+			return;
+		}
+		savePersonalDays(personalDays.concat([{
+			id: createPersonalId(),
+			name,
+			lunarDay,
+			lunarMonth
+		}]));
+		showPersonalDays();
+		closePicker();
 	}
 
 	function showMonth(mm, yy) {
@@ -533,7 +821,12 @@
 	}
 
 	function renderPicker() {
-		document.getElementById("picker").replaceChildren(createPickerPanel(pickerKind));
+		const root = document.getElementById("picker");
+		if (pickerKind === "nho") {
+			root.replaceChildren(createNhoPanel());
+			return;
+		}
+		root.replaceChildren(createPickerPanel(pickerKind));
 	}
 
 	function closePicker() {
@@ -575,6 +868,15 @@
 				return;
 			case "holiday-jump":
 				jumpToHoliday(node);
+				return;
+			case "nho-jump":
+				jumpToHoliday(node);
+				return;
+			case "nho-them":
+				openNhoForm();
+				return;
+			case "nho-xoa":
+				deletePersonalDay(node.dataset.id);
 				return;
 			case "prev-month":
 				shiftMonth(-1);
@@ -618,6 +920,10 @@
 				shiftYearPage(1);
 				return;
 			case "picker-panel":
+			case "nho-panel":
+				return;
+			case "nho-luu":
+				saveNhoForm();
 				return;
 			default:
 				closePicker();
@@ -626,6 +932,7 @@
 
 	window.onload = () => {
 		document.getElementById("content").addEventListener("click", handleCalendarClick);
+		document.getElementById("personal").addEventListener("click", handleCalendarClick);
 		document.getElementById("holidays").addEventListener("click", handleCalendarClick);
 		document.getElementById("picker").addEventListener("click", handlePickerClick);
 		document.addEventListener("keydown", (event) => {
@@ -635,7 +942,12 @@
 		});
 		showTodayInfo();
 		showUpcomingHolidays();
+		showPersonalDays();
 		showMonth(getCurrentMonth(), getCurrentYear());
+		loadPersonalDays((entries) => {
+			personalDays = entries;
+			showPersonalDays();
+		});
 	};
 
 })(window);

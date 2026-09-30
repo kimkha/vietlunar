@@ -1,13 +1,13 @@
-Chrome Web Store — VietLunar 1.0.0
+Chrome Web Store — VietLunar 1.1.0
 Item: https://chromewebstore.google.com/detail/vietlunar-lunar-calendar/blklnljefnfkonpnmknbbglbbhbhjieg
 Dashboard: https://chrome.google.com/webstore/devconsole/
-Package: dist/vietlunar-1.0.0.zip — from `yarn build`, or the GitHub release asset
+Package: dist/vietlunar-1.1.0.zip — from `yarn build`, or the GitHub release asset
 
 ================================================================================
 PACKAGE
 ================================================================================
 Upload dist/vietlunar-<version>.zip as a new package for the existing item
-(ID: blklnljefnfkonpnmknbbglbbhbhjieg). Version 1.0.0, Manifest V3.
+(ID: blklnljefnfkonpnmknbbglbbhbhjieg). Version 1.1.0, Manifest V3.
 
 If the old listing is unpublished or you lost access, create a new item
 and upload the same zip.
@@ -19,7 +19,7 @@ Name:
 VietLunar - Lunar Calendar for Vietnam
 
 Short description (max 132 chars):
-Vietnamese lunar calendar in one click: solar + lunar dates, Can Chi, lucky hours, and upcoming lunar holidays.
+Vietnamese lunar calendar in one click: solar + lunar dates, Can Chi, lucky hours, holidays, and personal lunar dates.
 
 Detailed description:
 VietLunar puts the Vietnamese lunar date on your Chrome toolbar and opens a full month at a glance.
@@ -27,6 +27,7 @@ VietLunar puts the Vietnamese lunar date on your Chrome toolbar and opens a full
 • Every cell shows both the solar (Dương lịch) and lunar (Âm lịch) date
 • Pick any day for its Can Chi, tiết khí, and giờ hoàng đạo
 • "Ngày lễ sắp tới" lists coming lunar holidays with a countdown — click one to jump to that month
+• "Ngày cần nhớ" stores death anniversaries and birthdays on the lunar calendar — click to jump
 • The toolbar icon is today's lunar day number, refreshed after midnight
 • Fully offline: no account, no tracking, no network access
 • English and Vietnamese UI
@@ -43,7 +44,7 @@ Tên:
 VietLunar - Âm Lịch Việt Nam
 
 Mô tả ngắn:
-Lịch âm dương Việt Nam trên Chrome: ngày dương, ngày âm, can chi, giờ hoàng đạo và ngày lễ âm lịch sắp tới.
+Lịch âm dương Việt Nam trên Chrome: ngày dương, ngày âm, can chi, giờ hoàng đạo, ngày lễ và ngày cần nhớ.
 
 Mô tả chi tiết:
 VietLunar hiện ngày âm ngay trên thanh công cụ Chrome và mở ra cả tháng trong một lần bấm.
@@ -51,6 +52,7 @@ VietLunar hiện ngày âm ngay trên thanh công cụ Chrome và mở ra cả t
 • Mỗi ô có cả ngày dương và ngày âm
 • Chọn một ngày để xem Can Chi, tiết khí, giờ hoàng đạo
 • Box "Ngày lễ sắp tới" liệt kê ngày lễ âm lịch kèm đếm ngược — bấm để nhảy tới tháng đó
+• Box "Ngày cần nhớ": lưu giỗ, sinh nhật theo ngày âm — bấm để nhảy tới tháng đó
 • Icon toolbar là số ngày âm hôm nay, tự làm mới sau nửa đêm
 • Chạy offline hoàn toàn: không tài khoản, không theo dõi, không truy cập mạng
 • Giao diện tiếng Việt và tiếng Anh
@@ -80,15 +82,17 @@ PRIVACY / PERMISSIONS (dashboard)
 ================================================================================
 Single purpose:
 Display the Vietnamese lunar date on the Chrome toolbar and show a monthly
-solar/lunar calendar in the popup.
+solar/lunar calendar in the popup, including user-added lunar dates to remember.
 
 Permissions justification:
 alarms — refresh the toolbar icon about once an hour so the lunar day number
-stays current after midnight. No other permissions.
+stays current after midnight.
+storage — save the lunar dates the user adds in "Ngày cần nhớ" (chrome.storage.sync
+on their profile; we never see that data).
 
 Data collection:
-Does not collect user data.
-No remote code. No analytics. No accounts. Works fully offline.
+Does not collect user data. Personal days stay in Chrome storage on the
+user's profile. No remote code. No analytics. No accounts. Works fully offline.
 
 Privacy policy URL (optional, host this file after you push):
 https://kimkha.github.io/vietlunar/resources/store/privacy.html
@@ -100,6 +104,6 @@ CHECKLIST
 [ ] chrome://extensions → Load unpacked → src/, smoke-test
 [ ] Developer Dashboard → select VietLunar → Package → Upload dist/vietlunar-<version>.zip
 [ ] Update listing text (EN + VI) and both screenshots
-[ ] Privacy practices: no user data collected
+[ ] Privacy practices: no user data collected by the developer
 [ ] Submit for review
-[ ] After publish, existing users on 0.4.0 should auto-update to 1.0.0
+[ ] After publish, existing users should auto-update to 1.1.0

@@ -766,6 +766,20 @@ test("box ngày lễ âm lịch sắp tới", async (t) => {
 		assert.deepEqual(rows.slice(1).map((h) => h.countdown), new Array(rows.length - 1).fill(null));
 	});
 
+	await t.test("không đếm ngược nếu mốc gần nhất còn hơn 99 ngày", () => {
+		const env = createPopupEnv({ today: [2026, 8, 26] });
+		const rows = env.getHolidays();
+		assert.equal(rows[0].name, "Ông Táo về trời");
+		assert.deepEqual(rows.map((h) => h.countdown), new Array(rows.length).fill(null));
+	});
+
+	await t.test("đúng 99 ngày thì vẫn hiện còn 99 ngày", () => {
+		const env = createPopupEnv({ today: [2026, 9, 23] });
+		const rows = env.getHolidays();
+		assert.equal(rows[0].name, "Ông Táo về trời");
+		assert.equal(rows[0].countdown, "còn 99 ngày");
+	});
+
 	await t.test("lễ hôm nay vẫn còn trong danh sách và ghi hôm nay", () => {
 		const env = createPopupEnv({ today: [2026, 8, 25] });
 		const rows = env.getHolidays();
@@ -899,5 +913,148 @@ test("box chỉ hiện đúng danh sách lễ âm đã chốt", async (t) => {
 			assert.equal(env.getInfoText("tin-le"), name);
 			assert.equal(cell.classList.contains("tet"), true);
 		}
+	});
+});
+
+test("Ngày cần nhớ", async (t) => {
+	const GIỖ = { id: "n1", name: "Giỗ ông", lunarDay: 15, lunarMonth: 8 };
+
+	await t.test("tiêu đề và nút Thêm ngày luôn hiện dù chưa có ngày nào", () => {
+		const env = createPopupEnv();
+		assert.equal(env.getPersonalTitle(), "Ngày cần nhớ");
+		assert.equal(env.getPersonalAddLabel(), "Thêm ngày");
+		assert.deepEqual(env.getPersonalDays(), []);
+	});
+
+	await t.test("đọc ngày đã lưu và hiện đúng hàng, chỉ mốc gần nhất có đếm ngược", () => {
+		const env = createPopupEnv({
+			personalDays: [
+				GIỖ,
+				{ id: "n2", name: "Sinh nhật", lunarDay: 1, lunarMonth: 1 },
+			],
+		});
+		assert.deepEqual(
+			env.getPersonalDays().map((row) => [row.name, row.solar, row.lunar, row.countdown]),
+			[
+				["Giỗ ông", "25/9/2026", "15/8 ÂL", "còn 24 ngày"],
+				["Sinh nhật", "6/2/2027", "1/1 ÂL", null],
+			]
+		);
+		assert.deepEqual(
+			env.getStoredPersonalDays().map((item) => item.name),
+			["Giỗ ông", "Sinh nhật"]
+		);
+	});
+
+	await t.test("không đếm ngược nếu mốc gần nhất còn hơn 99 ngày", () => {
+		const env = createPopupEnv({
+			personalDays: [{ id: "n2", name: "Sinh nhật", lunarDay: 1, lunarMonth: 1 }],
+		});
+		assert.deepEqual(
+			env.getPersonalDays().map((row) => [row.name, row.countdown]),
+			[["Sinh nhật", null]]
+		);
+	});
+
+	await t.test("Thêm ngày mở form, lưu thì thêm hàng và ghi storage", () => {
+		const env = createPopupEnv();
+		env.openPersonalForm();
+		assert.equal(env.isPickerOpen(), true);
+		assert.equal(env.getPickerTitle(), "Thêm ngày cần nhớ");
+		env.fillPersonalForm({ name: "  Giỗ bà  ", day: 20, month: 7 });
+		assert.equal(env.clickPickerAction("nho-luu"), true);
+		assert.equal(env.isPickerOpen(), false);
+		assert.deepEqual(
+			env.getPersonalDays().map((row) => [row.name, row.solar, row.lunar, row.countdown]),
+			[["Giỗ bà", "1/9/2026", "20/7 ÂL", "hôm nay"]]
+		);
+		const stored = env.getStoredPersonalDays();
+		assert.equal(stored.length, 1);
+		assert.equal(stored[0].name, "Giỗ bà");
+		assert.equal(stored[0].lunarDay, 20);
+		assert.equal(stored[0].lunarMonth, 7);
+		assert.ok(stored[0].id);
+	});
+
+	await t.test("tên trống thì không lưu và form vẫn mở", () => {
+		const env = createPopupEnv();
+		env.openPersonalForm();
+		env.fillPersonalForm({ name: "   ", day: 1, month: 1 });
+		assert.equal(env.clickPickerAction("nho-luu"), true);
+		assert.equal(env.isPickerOpen(), true);
+		assert.deepEqual(env.getPersonalDays(), []);
+		assert.deepEqual(env.getStoredPersonalDays(), []);
+	});
+
+	await t.test("Huỷ và Escape đóng form mà không ghi", () => {
+		const env = createPopupEnv();
+		env.openPersonalForm();
+		env.fillPersonalForm({ name: "Bỏ", day: 1, month: 1 });
+		assert.equal(env.clickPickerAction("nho-huy"), true);
+		assert.equal(env.isPickerOpen(), false);
+		env.openPersonalForm();
+		env.fillPersonalForm({ name: "Bỏ nữa", day: 2, month: 2 });
+		env.pressKey("Escape");
+		assert.equal(env.isPickerOpen(), false);
+		assert.deepEqual(env.getPersonalDays(), []);
+		assert.deepEqual(env.getStoredPersonalDays(), []);
+	});
+
+	await t.test("xoá một hàng thì hàng biến mất và storage cập nhật", () => {
+		const env = createPopupEnv({
+			personalDays: [
+				GIỖ,
+				{ id: "n2", name: "Sinh nhật", lunarDay: 1, lunarMonth: 1 },
+			],
+		});
+		assert.equal(env.clickPersonalDelete("Giỗ ông"), true);
+		assert.deepEqual(env.getPersonalDays().map((row) => row.name), ["Sinh nhật"]);
+		assert.deepEqual(env.getStoredPersonalDays().map((item) => item.id), ["n2"]);
+	});
+
+	await t.test("click hàng thì lịch nhảy tới ngày dương kế tiếp", () => {
+		const env = createPopupEnv({ personalDays: [GIỖ] });
+		env.clickPersonal("Giỗ ông");
+		assert.equal(env.getMonthTitle(), "Tháng 9 2026");
+		assert.equal(env.getInfoText("tin-duong"), "Thứ sáu, 25/9/2026");
+		assert.equal(env.getInfoText("tin-am"), "Ngày 15 tháng 8 ÂL");
+		assert.deepEqual(env.getSelectedCells().map((c) => c.children[0].textContent), ["25"]);
+	});
+
+	await t.test("nút xoá nằm cùng hàng với tên, tên giữ title đầy đủ", () => {
+		const env = createPopupEnv({ personalDays: [GIỖ] });
+		const row = env.getPersonalRows()[0];
+		const name = row.querySelector(".le-ten");
+		const del = row.querySelector(".nho-xoa");
+		assert.equal(name.title, "Giỗ ông");
+		assert.equal(del.parentNode, row);
+		assert.equal(row.children[row.children.length - 1], del);
+	});
+
+	await t.test("mở popup lần sau vẫn còn ngày đã lưu", () => {
+		const first = createPopupEnv();
+		first.openPersonalForm();
+		first.fillPersonalForm({ name: "Giỗ bà", day: 20, month: 7 });
+		assert.equal(first.clickPickerAction("nho-luu"), true);
+		const second = createPopupEnv({ personalDays: first.getStoredPersonalDays() });
+		assert.deepEqual(
+			second.getPersonalDays().map((row) => [row.name, row.lunar]),
+			[["Giỗ bà", "20/7 ÂL"]]
+		);
+	});
+
+	await t.test("bỏ qua mục lưu sai và không lẫn vào box lễ", () => {
+		const env = createPopupEnv({
+			personalDays: [
+				GIỖ,
+				{ id: "", name: "Thiếu id", lunarDay: 1, lunarMonth: 1 },
+				{ id: "bad-name", name: "  ", lunarDay: 1, lunarMonth: 1 },
+				{ id: "bad-day", name: "Sai ngày", lunarDay: 32, lunarMonth: 1 },
+				{ id: "bad-month", name: "Sai tháng", lunarDay: 15, lunarMonth: 13 },
+			],
+		});
+		assert.deepEqual(env.getPersonalDays().map((row) => row.name), ["Giỗ ông"]);
+		assert.doesNotMatch(env.serializeHolidays(), /Giỗ ông|nho-them|nho-xoa/);
+		assert.doesNotMatch(env.serializePersonal(), /Tết Trung Thu|le-chinh/);
 	});
 });

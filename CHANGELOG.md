@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-09-30
+
+### Added
+
+- Box "Ngày cần nhớ": lưu giỗ, sinh nhật theo ngày âm; bấm một dòng để lịch nhảy tới tháng đó.
+
+### Development
+
+- Ảnh và mô tả Web Store cập nhật cho Ngày cần nhớ.
+
 ## [1.0.0] - 2026-09-18
 
 ### Added

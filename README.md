@@ -11,6 +11,7 @@ Hiện ngày âm trên thanh công cụ Chrome, bấm ra cả tháng dương + �
 - Mỗi ô có cả ngày dương và ngày âm
 - Chọn một ngày để xem Can Chi, tiết khí, giờ hoàng đạo
 - Box «Ngày lễ âm lịch sắp tới» liệt kê lễ âm kèm đếm ngược — bấm để nhảy tới tháng đó
+- Box «Ngày cần nhớ»: lưu giỗ, sinh nhật theo ngày âm — bấm để nhảy tới tháng đó
 - Icon toolbar là số ngày âm hôm nay, tự làm mới sau nửa đêm
 - Chạy offline hoàn toàn: không tài khoản, không theo dõi, không truy cập mạng
 - Giao diện tiếng Việt và tiếng Anh

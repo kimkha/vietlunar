@@ -6,7 +6,8 @@ screenshots taken from a browser against `python3 -m http.server 8888` in the re
 pointed at http://127.0.0.1:8888/src/popup.html:
 
     popup-month.png  selector .khung, with #holidays set to display:none
-    popup-tet.png    selector .cot-lich, after clicking the Tet row in #holidays
+                     (#personal stays visible)
+    popup-tet.png    selector .khung, after clicking the Tet row in #holidays
 
 Run: python3 resources/store/compose_store_assets.py
 """
@@ -162,15 +163,15 @@ def main():
         "screenshot-1280x800-month.png",
         ["Ngày dương và ngày âm", "trong cùng một bảng"],
         ["Mỗi ô có cả ngày dương lẫn ngày âm",
-         "Chọn một ngày để xem can chi và tiết khí",
+         "Ngày cần nhớ: giỗ, sinh nhật theo âm lịch",
          "Giờ hoàng đạo cho từng ngày"],
         month, icon, PLUM, BERRY,
     )
     make_screenshot(
         "screenshot-1280x800-tet.png",
-        ["Ngày lễ âm lịch sắp tới,", "kèm đếm ngược"],
+        ["Ngày lễ âm lịch sắp tới", "và ngày cần nhớ"],
         ["Tết và ngày lễ được tô màu trên lịch",
-         "Bấm một dòng để nhảy tới tháng đó",
+         "Giỗ, sinh nhật lưu trên máy — bấm để nhảy tới",
          "Chạy offline, không theo dõi, không quảng cáo"],
         tet, icon, NAVY, BERRY,
     )

@@ -39,18 +39,15 @@
       }
 
       .khung {
-        display: flex;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: 364px 1fr;
         gap: 6px;
       }
 
-      .cot-lich {
-        flex: 0 0 364px;
-      }
-
       .cot-tin {
-        flex: 1 1 auto;
         min-width: 0;
+        display: flex;
+        flex-direction: column;
       }
 
       .thang {
@@ -310,6 +307,7 @@
       }
 
       #dayinfo {
+        flex: 1;
         border-radius: 12px;
         overflow: hidden;
         background: var(--cream);
@@ -450,8 +448,10 @@
         white-space: nowrap;
       }
 
-      #holidays {
-        margin-top: 6px;
+      #holidays,
+      #personal {
+        grid-column: 1 / -1;
+        min-width: 0;
         border-radius: 12px;
         overflow: hidden;
         background: var(--cream);
@@ -461,6 +461,126 @@
 
       #holidays:empty {
         display: none;
+      }
+
+      .nho-dau {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .nho-them {
+        flex: 0 0 auto;
+        padding: 2px 8px;
+        border: 1px solid rgba(51, 0, 51, 0.2);
+        border-radius: 999px;
+        background: var(--mint);
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 16px;
+        color: var(--plum);
+        cursor: pointer;
+      }
+
+      .nho-them:hover {
+        background: var(--mint-deep);
+      }
+
+      .nho-xoa {
+        grid-column: 5;
+        justify-self: end;
+        white-space: nowrap;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        font-family: inherit;
+        font-size: 16px;
+        line-height: 1;
+        color: var(--ink-soft);
+        cursor: pointer;
+      }
+
+      .nho-xoa:hover {
+        background: var(--hairline);
+        color: var(--plum);
+      }
+
+      .nho-truong {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .nho-nhan {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+
+      .nho-nhap {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 7px 8px;
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        background: #fff;
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--plum);
+      }
+
+      .nho-nhap:focus {
+        outline: none;
+        box-shadow: inset 0 0 0 2px rgba(51, 0, 51, 0.55);
+      }
+
+      .nho-hang {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .nho-hang .nho-truong {
+        margin-bottom: 0;
+      }
+
+      .nho-nut {
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+      }
+
+      .nho-nut button {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .nho-huy {
+        border: 1px solid var(--hairline);
+        background: var(--cream);
+        color: var(--plum);
+      }
+
+      .nho-luu {
+        border: 1px solid rgba(51, 0, 51, 0.2);
+        background: var(--mint);
+        color: var(--plum);
+      }
+
+      .nho-luu:hover,
+      .nho-huy:hover {
+        background: var(--mint-deep);
       }
 
       .le-dau {
@@ -481,8 +601,13 @@
         list-style: none;
       }
 
+      .le-ds.nho-ds {
+        grid-template-columns: max-content max-content minmax(0, 1fr) auto auto;
+      }
+
       .le-dong {
         grid-column: 1 / -1;
+        min-width: 0;
         display: grid;
         grid-template-columns: subgrid;
         align-items: center;
@@ -520,6 +645,10 @@
       }
 
       .le-ten {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         color: var(--plum);
       }
 
@@ -656,11 +785,12 @@
     <div class="khung">
       <div class="cot-lich">
         <div id="content"></div>
-        <div id="holidays"></div>
       </div>
       <div class="cot-tin">
         <div id="dayinfo"></div>
       </div>
+      <div id="personal"></div>
+      <div id="holidays"></div>
     </div>
     <div id="picker"></div>
     <script src="popup.js"></script>

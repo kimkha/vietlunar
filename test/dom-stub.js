@@ -40,6 +40,9 @@ class StubNode {
 		this.type = "";
 		this.disabled = false;
 		this.colSpan = 0;
+		this.value = "";
+		this.placeholder = "";
+		this.maxLength = 0;
 		this.classList = new ClassList(this);
 		this.listeners = {};
 		this.ownText = "";
@@ -204,14 +207,27 @@ function createPopupEnv(options) {
 
 	const content = new StubNode("div");
 	const dayinfo = new StubNode("div");
+	const personal = new StubNode("div");
 	const holidays = new StubNode("div");
 	const picker = new StubNode("div");
 	const alerts = [];
 	const openedWindows = [];
 	const documentListeners = {};
 	let printCalls = 0;
+	const storage = (options && options.storage) || {
+		personalDays: (options && options.personalDays) || []
+	};
+	if (!Array.isArray(storage.personalDays)) {
+		storage.personalDays = [];
+	}
 
-	const elementsById = { content: content, dayinfo: dayinfo, holidays: holidays, picker: picker };
+	const elementsById = {
+		content: content,
+		dayinfo: dayinfo,
+		personal: personal,
+		holidays: holidays,
+		picker: picker
+	};
 
 	context.document = {
 		createElement: (tag) => new StubNode(tag),
@@ -225,6 +241,23 @@ function createPopupEnv(options) {
 		alert: (message) => alerts.push(message),
 		open: (url) => openedWindows.push(url),
 		print: () => { printCalls += 1; },
+	};
+	context.chrome = {
+		storage: {
+			sync: {
+				get(_keys, cb) {
+					cb({ personalDays: storage.personalDays.map((item) => Object.assign({}, item)) });
+				},
+				set(items, cb) {
+					if (Object.prototype.hasOwnProperty.call(items, "personalDays")) {
+						storage.personalDays = Array.from(items.personalDays, (item) => Object.assign({}, item));
+					}
+					if (cb) {
+						cb();
+					}
+				}
+			}
+		}
 	};
 	context.alert = context.window.alert;
 
@@ -242,6 +275,7 @@ function createPopupEnv(options) {
 	return {
 		content,
 		dayinfo,
+		personal,
 		holidays,
 		picker,
 		alerts,
@@ -290,6 +324,91 @@ function createPopupEnv(options) {
 			holidays.dispatch("click", row);
 			return row;
 		},
+
+		getPersonalTitle: () => {
+			const node = personal.querySelector(".nho-ten");
+			return node ? node.textContent : null;
+		},
+		getPersonalAddButton: () => personal.querySelectorAll("button").find((b) => b.dataset.action === "nho-them"),
+		getPersonalAddLabel: () => {
+			const button = personal.querySelectorAll("button").find((b) => b.dataset.action === "nho-them");
+			return button ? button.textContent : null;
+		},
+		getPersonalRows: () => personal.querySelectorAll('li[data-action="nho-jump"]'),
+		getPersonalDays: () =>
+			personal.querySelectorAll('li[data-action="nho-jump"]').map((row) => {
+				const [dow, solar] = row.querySelector(".le-duong").textContent.split(" ");
+				return {
+					dow,
+					solar,
+					lunar: row.querySelector(".le-am").textContent,
+					name: row.querySelector(".le-ten").textContent,
+					countdown: row.querySelector(".le-con") ? row.querySelector(".le-con").textContent : null,
+				};
+			}),
+		clickPersonalAdd: () => {
+			const button = personal.querySelectorAll("button").find((b) => b.dataset.action === "nho-them");
+			if (!button) {
+				throw new Error("no personal add button");
+			}
+			personal.dispatch("click", button);
+			return button;
+		},
+		openPersonalForm: () => {
+			const button = personal.querySelectorAll("button").find((b) => b.dataset.action === "nho-them");
+			if (!button) {
+				throw new Error("no personal add button");
+			}
+			personal.dispatch("click", button);
+			return true;
+		},
+		clickPersonalRow: (name) => {
+			const row = personal.querySelectorAll('li[data-action="nho-jump"]').find((r) => r.querySelector(".le-ten").textContent === name);
+			if (!row) {
+				throw new Error("no personal row for " + name);
+			}
+			personal.dispatch("click", row);
+			return row;
+		},
+		clickPersonal: (name) => {
+			const row = personal.querySelectorAll('li[data-action="nho-jump"]').find((r) => r.querySelector(".le-ten").textContent === name);
+			if (!row) {
+				throw new Error("no personal row for " + name);
+			}
+			personal.dispatch("click", row);
+			return true;
+		},
+		clickPersonalDelete: (name) => {
+			const row = personal.querySelectorAll('li[data-action="nho-jump"]').find((r) => r.querySelector(".le-ten").textContent === name);
+			if (!row) {
+				throw new Error("no personal row for " + name);
+			}
+			const button = row.querySelector(".nho-xoa");
+			if (!button) {
+				throw new Error("no delete button for " + name);
+			}
+			personal.dispatch("click", button);
+			return true;
+		},
+		fillPersonalForm: (fields) => {
+			const nameNode = picker.querySelector('[data-field="name"]');
+			const dayNode = picker.querySelector('[data-field="day"]');
+			const monthNode = picker.querySelector('[data-field="month"]');
+			if (!nameNode || !dayNode || !monthNode) {
+				throw new Error("personal form is not open");
+			}
+			if (fields.name != null) {
+				nameNode.value = fields.name;
+			}
+			if (fields.day != null) {
+				dayNode.value = String(fields.day);
+			}
+			if (fields.month != null) {
+				monthNode.value = String(fields.month);
+			}
+		},
+		getStoredPersonalDays: () => Array.from(storage.personalDays, (item) => Object.assign({}, item)),
+		serializePersonal: () => serialize(personal),
 
 		clickAction: (action) => {
 			const button = getButton(action);
